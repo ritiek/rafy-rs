@@ -16,7 +16,7 @@ use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
 
-struct Info {
+pub struct Info {
     video_url: String,
 }
 
