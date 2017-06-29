@@ -17,7 +17,7 @@ use std::fs::File;
 use regex::Regex;
 
 struct Info {
-    name: String,
+    video_url: String,
 }
 
 pub fn new(video_url: &str) -> Info {
