@@ -16,7 +16,11 @@ use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
 
-pub fn new(video_url: &str) {
+struct Info {
+    name: String,
+}
+
+pub fn new(video_url: &str) -> Info {
     //Regex for youtube URLs.
     let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
     let mut vid = "https://www.youtube.com/watch?v=DjMkfARvGE8";
@@ -26,6 +30,7 @@ pub fn new(video_url: &str) {
     }
     let url = format!("https://youtube.com/get_video_info?video_id={}", vid);
     download(&url);
+    Info { video_url : video_url }
 }
 
 fn download(url: &str) {
