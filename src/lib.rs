@@ -17,7 +17,19 @@ use std::fs::File;
 use regex::Regex;
 
 pub struct Info {
-    pub video_url: String,
+    pub url: String,
+    pub title: String,
+    //pub rating: ,
+    pub viewcount: u32,
+    pub author: String,
+    pub length: u32,
+    pub duration: String,
+    pub likes: u32,
+    pub dislikes: u32,
+    pub description: String,
+    //pub streams: ,
+    //pub audiostreams: ,
+    //pub allstreams: ,
 }
 
 pub fn new(video_url: &str) -> Info {
