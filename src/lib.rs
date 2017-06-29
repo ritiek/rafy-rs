@@ -17,7 +17,7 @@ use std::fs::File;
 use regex::Regex;
 
 struct Info {
-    video_url: &str,
+    video_url: String,
 }
 
 pub fn new(video_url: &str) -> Info {
@@ -30,7 +30,7 @@ pub fn new(video_url: &str) -> Info {
     }
     let url = format!("https://youtube.com/get_video_info?video_id={}", vid);
     download(&url);
-    Info { video_url : video_url }
+    Info { video_url.to_string(): video_url }
 }
 
 fn download(url: &str) {
