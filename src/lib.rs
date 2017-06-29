@@ -30,7 +30,8 @@ pub fn new(video_url: &str) -> Info {
     }
     let url = format!("https://youtube.com/get_video_info?video_id={}", vid);
     download(&url);
-    Info { video_url.to_string(): video_url }
+    s_video_url = video_url.to_string()
+    Info { video_url: video_url }
 }
 
 fn download(url: &str) {
