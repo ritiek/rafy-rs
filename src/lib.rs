@@ -18,31 +18,31 @@ use regex::Regex;
 
 pub struct Info {
     pub url: String,
-    pub title: String,
+    //pub title: String,
     //pub rating: ,
-    pub viewcount: u32,
-    pub author: String,
-    pub length: u32,
-    pub duration: String,
-    pub likes: u32,
-    pub dislikes: u32,
-    pub description: String,
+    //pub viewcount: u32,
+    //pub author: String,
+    //pub length: u32,
+    //pub duration: String,
+    //pub likes: u32,
+    //pub dislikes: u32,
+    //pub description: String,
     //pub streams: ,
     //pub audiostreams: ,
     //pub allstreams: ,
 }
 
-pub fn new(video_url: &str) -> Info {
+pub fn new(url: &str) -> Info {
     //Regex for youtube URLs.
     let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
-    let mut vid = "https://www.youtube.com/watch?v=DjMkfARvGE8";
+    let mut vid = url;
     if url_regex.is_match(vid) {
         let vid_split = url_regex.captures(vid).unwrap();
         vid = vid_split.get(1).unwrap().as_str();
     }
     let url = format!("https://youtube.com/get_video_info?video_id={}", vid);
     download(&url);
-    Info { video_url: video_url.to_string() }
+    Info { url: video_url.to_string() }
 }
 
 fn download(url: &str) {
