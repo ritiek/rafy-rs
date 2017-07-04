@@ -25,6 +25,7 @@ fn main() {
     println!("{}", content.viewcount);
     println!("{}", content.author);
     println!("{}", content.length);
+}
 ```
 
 ## License
