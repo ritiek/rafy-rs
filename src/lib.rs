@@ -65,7 +65,7 @@ impl Rafy {
         // list of available qualities
         let mut qualities: HashMap<i32, (String, String)> = HashMap::new();
         for (i, url) in streams.iter().enumerate() {
-            let quality = parse_url(url);
+            let quality = Rafy::parse_url(url);
             let extension = quality["type"]
                 .split('/')
                 .nth(1)
