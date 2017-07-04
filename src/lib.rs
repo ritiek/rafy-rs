@@ -18,11 +18,11 @@ use regex::Regex;
 
 pub struct Rafy {
     pub url: String,
-    //pub title: String,
+    pub title: String,
     pub rating: String,
-    //pub viewcount: u32,
-    //pub author: String,
-    //pub length: u32,
+    pub viewcount: u32,
+    pub author: String,
+    pub length: u32,
     //pub duration: String,
     //pub likes: u32,
     //pub dislikes: u32,
@@ -37,6 +37,7 @@ impl Rafy {
         //Regex for youtube URLs.
         let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
         let mut vid = url;
+
         if url_regex.is_match(vid) {
             let vid_split = url_regex.captures(vid).unwrap();
             vid = vid_split.get(1).unwrap().as_str();
@@ -54,12 +55,25 @@ impl Rafy {
             process::exit(1);
         }
 
+        let title = &hq["title"];
         let rating = &hq["avg_rating"];
+        let viewcount = &hq["view_count"];
+        let author = &hq["author"];
+        let length = &hq["length_seconds"];
 
         //Self::download(hq);
+
         Rafy {
             url: url.to_string(),
-            rating: rating.to_string()
+            title: title.to_string(),
+            rating: rating.to_string(),
+            viewcount: viewcount.trim()
+                        .parse::<u32>()
+                        .unwrap(),
+            author: author.to_string(),
+            length: length.trim()
+                        .parse::<u32>()
+                        .unwrap(),
         }
     }
 
