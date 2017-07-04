@@ -42,15 +42,15 @@ impl Rafy {
             vid = vid_split.get(1).unwrap().as_str();
         }
         let url = format!("https://youtube.com/get_video_info?video_id={}", vid);
-        Rafy::download(&url);
+        Self::download(&url);
         Rafy { url: url.to_string() }
     }
 
     fn download(url: &str) {
-        let mut response = Rafy::send_request(url);
+        let mut response = Self::send_request(url);
         let mut response_str = String::new();
         response.read_to_string(&mut response_str).unwrap();
-        let hq = Rafy::parse_url(&response_str);
+        let hq = Self::parse_url(&response_str);
 
         if hq["status"] != "ok" {
             println!("Video not found!");
@@ -65,7 +65,7 @@ impl Rafy {
         // list of available qualities
         let mut qualities: HashMap<i32, (String, String)> = HashMap::new();
         for (i, url) in streams.iter().enumerate() {
-            let quality = Rafy::parse_url(url);
+            let quality = Self::parse_url(url);
             let extension = quality["type"]
                 .split('/')
                 .nth(1)
