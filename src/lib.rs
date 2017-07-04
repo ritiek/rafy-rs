@@ -19,7 +19,7 @@ use regex::Regex;
 pub struct Rafy {
     pub url: String,
     //pub title: String,
-    //pub rating: ,
+    pub rating: String,
     //pub viewcount: u32,
     //pub author: String,
     //pub length: u32,
@@ -41,13 +41,10 @@ impl Rafy {
             let vid_split = url_regex.captures(vid).unwrap();
             vid = vid_split.get(1).unwrap().as_str();
         }
-        let url = format!("https://youtube.com/get_video_info?video_id={}", vid);
-        Self::download(&url);
-        Rafy { url: url.to_string() }
-    }
 
-    fn download(url: &str) {
-        let mut response = Self::send_request(url);
+        let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
+
+        let mut response = Self::send_request(&url_info);
         let mut response_str = String::new();
         response.read_to_string(&mut response_str).unwrap();
         let hq = Self::parse_url(&response_str);
@@ -57,7 +54,17 @@ impl Rafy {
             process::exit(1);
         }
 
-        // get video info
+        let rating = &hq["avg_rating"];
+
+        //Self::download(hq);
+        Rafy {
+            url: url.to_string(),
+            rating: rating.to_string()
+        }
+    }
+
+    fn download(hq: HashMap<String, String>) {
+        // get streams
         let streams: Vec<&str> = hq["url_encoded_fmt_stream_map"]
             .split(',')
             .collect();
