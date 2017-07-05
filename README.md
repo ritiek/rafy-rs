@@ -35,9 +35,9 @@ fn main() {
 }
 ```
 
-## Notes
+## Thanks
 
-The library does not use YouTube API keys at the moment, they can be used to fetch more information about the video. Check out the progress in [develop branch](https://github.com/ritiek/rafy-rs).
+The base code was adapted from [rust-youtube-downloader](https://github.com/smoqadam/rust-youtube-downloader) by [smoqadam](https://github.com/smoqadam), modified and further extended to suit the library accordingly.
 
 ## License
 
