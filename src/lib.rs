@@ -27,9 +27,15 @@ pub struct Rafy {
     //pub likes: u32,
     //pub dislikes: u32,
     //pub description: String,
-    //pub streams: ,
+    pub streams: Vec<Stream>,
     //pub audiostreams: ,
     //pub allstreams: ,
+}
+
+pub struct Stream {
+    pub extension: String,
+    pub quality: String,
+    pub url: String,
 }
 
 impl Rafy {
@@ -40,15 +46,18 @@ impl Rafy {
 
         if url_regex.is_match(vid) {
             let vid_split = url_regex.captures(vid).unwrap();
-            vid = vid_split.get(1).unwrap().as_str();
+            vid = vid_split.get(1)
+                    .unwrap()
+                    .as_str();
         }
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
+        //println!("{}", url_info);
 
         let mut response = Self::send_request(&url_info);
         let mut response_str = String::new();
         response.read_to_string(&mut response_str).unwrap();
-        let hq = Self::parse_url(&response_str);
+        let mut hq = Self::parse_url(&response_str);
 
         if hq["status"] != "ok" {
             println!("Video not found!");
@@ -60,6 +69,12 @@ impl Rafy {
         let viewcount = &hq["view_count"];
         let author = &hq["author"];
         let length = &hq["length_seconds"];
+        /*let streams: Vec<String> = hq["url_encoded_fmt_stream_map"]
+                                    .split(',')
+                                    .map(|s| Self::parse_url(s)["url"].to_string())
+                                    .collect();*/
+
+        let streams = Self::get_streams(&hq);
 
         //Self::download(hq);
 
@@ -74,7 +89,40 @@ impl Rafy {
             length: length.trim()
                         .parse::<u32>()
                         .unwrap(),
+            streams: streams,
         }
+    }
+
+    fn get_streams(hq: &HashMap<String, String>) -> Vec<Stream> {
+        let mut parsed_streams: Vec<Stream> = Vec::new();
+
+        let streams: Vec<&str> = hq["url_encoded_fmt_stream_map"]
+            .split(',')
+            .collect();
+
+        for url in streams.iter() {
+            let parsed = Self::parse_url(url);
+
+            let extension = &parsed["type"]
+                .split('/')
+                .nth(1)
+                .unwrap()
+                .split(';')
+                .next()
+                .unwrap();
+            let quality = &parsed["quality"];
+            let stream_url = &parsed["url"];
+
+            let parsed_stream = Stream {
+                        extension: extension.to_string(),
+                        quality: quality.to_string(),
+                        url: stream_url.to_string()
+                    };
+
+            parsed_streams.push(parsed_stream);
+        }
+
+        parsed_streams
     }
 
     fn download(hq: HashMap<String, String>) {
