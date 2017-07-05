@@ -23,6 +23,8 @@ pub struct Rafy {
     pub viewcount: u32,
     pub author: String,
     pub length: u32,
+    pub thumb: String,
+    //pub bigthumb: String,
     //pub duration: String,
     //pub likes: u32,
     //pub dislikes: u32,
@@ -38,9 +40,13 @@ pub struct Stream {
     pub url: String,
 }
 
+
 impl Rafy {
+
     pub fn new(url: &str) -> Rafy {
-        //Regex for youtube URLs.
+        // API key to fetch content
+        let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
+        // Regex for youtube URLs
         let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
         let mut vid = url;
 
@@ -52,45 +58,46 @@ impl Rafy {
         }
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
-        //println!("{}", url_info);
+        let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
 
-        let mut response = Self::send_request(&url_info);
-        let mut response_str = String::new();
-        response.read_to_string(&mut response_str).unwrap();
-        let mut hq = Self::parse_url(&response_str);
+        let mut url_response = Self::send_request(&url_info);
+        let mut url_response_str = String::new();
+        url_response.read_to_string(&mut url_response_str).unwrap();
+        let mut basic = Self::parse_url(&url_response_str);
 
-        if hq["status"] != "ok" {
+        let mut api_response = Self::send_request(&api_info);
+        let mut api_response_str = String::new();
+        api_response.read_to_string(&mut api_response_str).unwrap();
+        let mut advanced = Self::parse_url(&api_response_str);
+
+        println!("{:?}", advanced);
+
+        if basic["status"] != "ok" {
             println!("Video not found!");
             process::exit(1);
         }
 
-        let title = &hq["title"];
-        let rating = &hq["avg_rating"];
-        let viewcount = &hq["view_count"];
-        let author = &hq["author"];
-        let length = &hq["length_seconds"];
-        /*let streams: Vec<String> = hq["url_encoded_fmt_stream_map"]
-                                    .split(',')
-                                    .map(|s| Self::parse_url(s)["url"].to_string())
-                                    .collect();*/
+        let title = &basic["title"];
+        let rating = &basic["avg_rating"];
+        let viewcount = &basic["view_count"];
+        let author = &basic["author"];
+        let length = &basic["length_seconds"];
+        let thumb = &basic["thumbnail_url"];
+        let streams = Self::get_streams(&basic);
 
-        let streams = Self::get_streams(&hq);
-
-        //Self::download(hq);
-
-        Rafy {
-            url: url.to_string(),
-            title: title.to_string(),
-            rating: rating.to_string(),
-            viewcount: viewcount.trim()
-                        .parse::<u32>()
-                        .unwrap(),
-            author: author.to_string(),
-            length: length.trim()
-                        .parse::<u32>()
-                        .unwrap(),
-            streams: streams,
-        }
+        Rafy {  url: url.to_string(),
+                title: title.to_string(),
+                rating: rating.to_string(),
+                viewcount: viewcount.trim()
+                            .parse::<u32>()
+                            .unwrap(),
+                author: author.to_string(),
+                length: length.trim()
+                            .parse::<u32>()
+                            .unwrap(),
+                thumb: thumb.to_string(),
+                streams: streams,
+            }
     }
 
     fn get_streams(hq: &HashMap<String, String>) -> Vec<Stream> {
@@ -125,32 +132,6 @@ impl Rafy {
         parsed_streams
     }
 
-    fn download(hq: HashMap<String, String>) {
-        // get streams
-        let streams: Vec<&str> = hq["url_encoded_fmt_stream_map"]
-            .split(',')
-            .collect();
-
-        // list of available qualities
-        let mut qualities: HashMap<i32, (String, String)> = HashMap::new();
-        for (i, url) in streams.iter().enumerate() {
-            let quality = Self::parse_url(url);
-            let extension = quality["type"]
-                .split('/')
-                .nth(1)
-                .unwrap()
-                .split(';')
-                .next()
-                .unwrap();
-            qualities.insert(i as i32,
-                             (quality["url"].to_string(), extension.to_owned()));
-            println!("{}- {} {}",
-                     i,
-                     quality["quality"],
-                     quality["type"]);
-        }
-    }
-
     fn send_request(url: &str) -> Response {
         let ssl = NativeTlsClient::new().unwrap();
         let connector = HttpsConnector::new(ssl);
@@ -162,8 +143,11 @@ impl Rafy {
     }
 
     fn parse_url(query: &str) -> HashMap<String, String> {
-        let u = format!("{}{}", "http://e.com?", query);
-        let parsed_url = hyper::Url::parse(&u).unwrap();
-        parsed_url.query_pairs().into_owned().collect()
+        let url = format!("{}{}", "http://e.com?", query);
+        let parsed_url = hyper::Url::parse(&url).unwrap();
+        parsed_url.query_pairs()
+                .into_owned()
+                .collect()
     }
+
 }
