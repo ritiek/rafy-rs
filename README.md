@@ -25,6 +25,13 @@ fn main() {
     println!("{}", content.viewcount);
     println!("{}", content.author);
     println!("{}", content.length);
+
+    for stream in content.streams {
+        println!("{}", stream.extension);
+        println!("{}", stream.quality);
+        println!("{}", stream.url);
+    }
+
 }
 ```
 
