@@ -35,6 +35,10 @@ fn main() {
 }
 ```
 
+## Notes
+
+The library does not use YouTube API keys at the moment, they can be used to fetch more information about the video. Check out the progress in [develop branch](https://github.com/ritiek/rafy-rs).
+
 ## License
 
 `The MIT License`
