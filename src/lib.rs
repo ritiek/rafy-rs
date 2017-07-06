@@ -2,9 +2,11 @@ extern crate hyper;
 extern crate hyper_native_tls;
 extern crate pbr;
 extern crate regex;
+extern crate serde_json;
 
+use serde_json::{Value};
 use pbr::ProgressBar;
-use std::{process,str};
+use std::{process, str};
 use std::collections::HashMap;
 use hyper::client::response::Response;
 use hyper::Client;
@@ -59,6 +61,7 @@ impl Rafy {
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
+        println!("{}", api_info);
 
         let mut url_response = Self::send_request(&url_info);
         let mut url_response_str = String::new();
@@ -68,9 +71,9 @@ impl Rafy {
         let mut api_response = Self::send_request(&api_info);
         let mut api_response_str = String::new();
         api_response.read_to_string(&mut api_response_str).unwrap();
-        let mut advanced = Self::parse_url(&api_response_str);
 
-        println!("{:?}", advanced);
+        let parsed_json: Value = serde_json::from_str(&api_response_str).unwrap();
+        println!("{}", parsed_json["etag"]);
 
         if basic["status"] != "ok" {
             println!("Video not found!");
