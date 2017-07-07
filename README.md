@@ -27,6 +27,11 @@ fn main() {
     println!("{}", content.length);
     println!("{}", content.thumb);
 
+    println!("{}", content.likes);
+    println!("{}", content.dislikes);
+    println!("{}", content.commentcount);
+    println!("{}", content.description);
+
     for stream in content.streams {
         println!("{}", stream.extension);
         println!("{}", stream.quality);
