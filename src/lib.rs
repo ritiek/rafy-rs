@@ -28,9 +28,10 @@ pub struct Rafy {
     pub thumb: String,
     //pub bigthumb: String,
     //pub duration: String,
-    //pub likes: u32,
-    //pub dislikes: u32,
-    //pub description: String,
+    pub likes: u32,
+    pub dislikes: u32,
+    pub commentcount: u32,
+    pub description: String,
     pub streams: Vec<Stream>,
     //pub audiostreams: ,
     //pub allstreams: ,
@@ -73,7 +74,6 @@ impl Rafy {
         api_response.read_to_string(&mut api_response_str).unwrap();
 
         let parsed_json: Value = serde_json::from_str(&api_response_str).unwrap();
-        println!("{}", parsed_json["etag"]);
 
         if basic["status"] != "ok" {
             println!("Video not found!");
@@ -86,19 +86,36 @@ impl Rafy {
         let author = &basic["author"];
         let length = &basic["length_seconds"];
         let thumb = &basic["thumbnail_url"];
+
+        let likes = &parsed_json["items"][0]["statistics"]["likeCount"];
+        let dislikes = &parsed_json["items"][0]["statistics"]["dislikeCount"];
+        let commentcount = &parsed_json["items"][0]["statistics"]["commentCount"];
+        let description = &parsed_json["items"][0]["snippet"]["description"];
+
         let streams = Self::get_streams(&basic);
 
         Rafy {  url: url.to_string(),
                 title: title.to_string(),
                 rating: rating.to_string(),
-                viewcount: viewcount.trim()
-                            .parse::<u32>()
-                            .unwrap(),
+                viewcount: viewcount.parse::<u32>().unwrap(),
                 author: author.to_string(),
-                length: length.trim()
+                length: length.parse::<u32>().unwrap(),
+                thumb: thumb.to_string(),
+
+                likes: likes.to_string()
+                            .trim_matches('"')
                             .parse::<u32>()
                             .unwrap(),
-                thumb: thumb.to_string(),
+                dislikes: dislikes.to_string()
+                            .trim_matches('"')
+                            .parse::<u32>()
+                            .unwrap(),
+                commentcount: commentcount.to_string()
+                            .trim_matches('"')
+                            .parse::<u32>()
+                            .unwrap(),
+                description: description.to_string(),
+
                 streams: streams,
             }
     }
