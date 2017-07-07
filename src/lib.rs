@@ -19,13 +19,13 @@ use std::fs::File;
 use regex::Regex;
 
 pub struct Rafy {
-    pub url: String,
+    pub videoid: String,
     pub title: String,
     pub rating: String,
     pub viewcount: u32,
     pub author: String,
     pub length: u32,
-    pub thumb: String,
+    pub thumbdefault: String,
     //pub bigthumb: String,
     //pub duration: String,
     pub likes: u32,
@@ -33,6 +33,10 @@ pub struct Rafy {
     pub commentcount: u32,
     pub description: String,
     pub streams: Vec<Stream>,
+    pub thumbmedium: String,
+    pub thumbhigh: String,
+    pub thumbstandard: String,
+    pub thumbmaxres: String,
     //pub audiostreams: ,
     //pub allstreams: ,
 }
@@ -62,7 +66,6 @@ impl Rafy {
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
-        println!("{}", api_info);
 
         let mut url_response = Self::send_request(&url_info);
         let mut url_response_str = String::new();
@@ -80,27 +83,35 @@ impl Rafy {
             process::exit(1);
         }
 
+        //println!("{}", url_info);
+        //println!("{}", api_info);
+
+        let videoid = &basic["video_id"];
         let title = &basic["title"];
         let rating = &basic["avg_rating"];
         let viewcount = &basic["view_count"];
         let author = &basic["author"];
         let length = &basic["length_seconds"];
-        let thumb = &basic["thumbnail_url"];
+        let thumbdefault = &basic["thumbnail_url"];
 
         let likes = &parsed_json["items"][0]["statistics"]["likeCount"];
         let dislikes = &parsed_json["items"][0]["statistics"]["dislikeCount"];
         let commentcount = &parsed_json["items"][0]["statistics"]["commentCount"];
         let description = &parsed_json["items"][0]["snippet"]["description"];
+        let thumbmedium = &parsed_json["items"][0]["snippet"]["thumbnails"]["medium"]["url"];
+        let thumbhigh = &parsed_json["items"][0]["snippet"]["thumbnails"]["high"]["url"];
+        let thumbstandard = &parsed_json["items"][0]["snippet"]["thumbnails"]["standard"]["url"];
+        let thumbmaxres = &parsed_json["items"][0]["snippet"]["thumbnails"]["maxres"]["url"];
 
         let streams = Self::get_streams(&basic);
 
-        Rafy {  url: url.to_string(),
+        Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
                 rating: rating.to_string(),
                 viewcount: viewcount.parse::<u32>().unwrap(),
                 author: author.to_string(),
                 length: length.parse::<u32>().unwrap(),
-                thumb: thumb.to_string(),
+                thumbdefault: thumbdefault.to_string(),
 
                 likes: likes.to_string()
                             .trim_matches('"')
@@ -115,6 +126,10 @@ impl Rafy {
                             .parse::<u32>()
                             .unwrap(),
                 description: description.to_string(),
+                thumbmedium: thumbmedium.to_string().trim_matches('"').to_string(),
+                thumbhigh: thumbhigh.to_string().trim_matches('"').to_string(),
+                thumbstandard: thumbstandard.to_string().trim_matches('"').to_string(),
+                thumbmaxres: thumbmaxres.to_string().trim_matches('"').to_string(),
 
                 streams: streams,
             }
