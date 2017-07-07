@@ -19,18 +19,22 @@ use rafy::Rafy;
 
 fn main() {
     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-    println!("{}", content.url);
+    println!("{}", content.videoid);
     println!("{}", content.title);
     println!("{}", content.rating);
     println!("{}", content.viewcount);
     println!("{}", content.author);
     println!("{}", content.length);
-    println!("{}", content.thumb);
+    println!("{}", content.thumbdefault);
 
     println!("{}", content.likes);
     println!("{}", content.dislikes);
     println!("{}", content.commentcount);
     println!("{}", content.description);
+    println!("{}", content.thumbmedium);
+    println!("{}", content.thumbhigh);
+    println!("{}", content.thumbstandard);
+    println!("{}", content.thumbmaxres);
 
     for stream in content.streams {
         println!("{}", stream.extension);
@@ -38,7 +42,7 @@ fn main() {
         println!("{}", stream.url);
     }
 
-}
+}                                                                                                                                                   
 ```
 
 ## Thanks
