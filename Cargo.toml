@@ -5,7 +5,7 @@ authors = ["Ritiek <ritiekmalhotra123@gmail.com>"]
 
 [dependencies]
 hyper = "0.10"
-hyper-native-tls = "0.2.2"
+hyper-native-tls = "0.2"
 pbr = "1.0.0-alpha.3"
-regex = "0.2.1"
+regex = "0.2"
 json = "0.11"
