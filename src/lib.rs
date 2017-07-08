@@ -43,6 +43,7 @@ pub struct Stream {
     pub extension: String,
     pub quality: String,
     pub url: String,
+    title: String,
 }
 
 
@@ -52,14 +53,14 @@ impl Stream {
         //download self.url
         let response = Rafy::send_request(&self.url);
         let file_size = Rafy::get_file_size(&response);
-        let filename = "test.mp4";
-        Self::write_file(response, &filename, file_size);
+        let file_name = format!("{}.{}", &self.title, &self.extension);
+        Self::write_file(response, &file_name, file_size);
     }
 
     fn write_file(mut response: Response, title: &str, file_size: u64) {
         // initialize progressbar
         let mut pb = ProgressBar::new(file_size);
-        pb.format("╢▌▌░╟");
+        pb.format("â•¢â–Œâ–Œâ–‘â•Ÿ");
 
         // Download and write to file
         let mut buf = [0; 128 * 1024];
@@ -169,10 +170,9 @@ impl Rafy {
             }
     }
 
-    fn get_streams(hq: &HashMap<String, String>) -> Vec<Stream> {
+    fn get_streams(basic: &HashMap<String, String>) -> Vec<Stream> {
         let mut parsed_streams: Vec<Stream> = Vec::new();
-
-        let streams: Vec<&str> = hq["url_encoded_fmt_stream_map"]
+        let streams: Vec<&str> = basic["url_encoded_fmt_stream_map"]
             .split(',')
             .collect();
 
@@ -189,10 +189,13 @@ impl Rafy {
             let quality = &parsed["quality"];
             let stream_url = &parsed["url"];
 
+            let title = &basic["title"];
+
             let parsed_stream = Stream {
                         extension: extension.to_string(),
                         quality: quality.to_string(),
-                        url: stream_url.to_string()
+                        url: stream_url.to_string(),
+                        title: title.to_string()
                     };
 
             parsed_streams.push(parsed_stream);
