@@ -36,13 +36,15 @@ fn main() {
     println!("{}", content.thumbstandard);
     println!("{}", content.thumbmaxres);
 
-    for stream in content.streams {
+    let ref streams = content.streams;
+
+    for stream in streams {
         println!("{}", stream.extension);
         println!("{}", stream.quality);
         println!("{}", stream.url);
     }
     
-    content.streams[0].download();
+    streams[0].download();
 
 }                                                                                                                                                   
 ```
