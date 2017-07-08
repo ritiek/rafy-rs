@@ -60,7 +60,7 @@ impl Stream {
     fn write_file(mut response: Response, title: &str, file_size: u64) {
         // initialize progressbar
         let mut pb = ProgressBar::new(file_size);
-        pb.format("â•¢â–Œâ–Œâ–‘â•Ÿ");
+        pb.format("╢▌▌░╟");
 
         // Download and write to file
         let mut buf = [0; 128 * 1024];
