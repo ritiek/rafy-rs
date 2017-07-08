@@ -35,6 +35,8 @@ pub struct Rafy {
     pub thumbhigh: String,
     pub thumbstandard: String,
     pub thumbmaxres: String,
+    pub published: String,
+    pub category: u32,
     //pub audiostreams: ,
     //pub allstreams: ,
 }
@@ -119,7 +121,7 @@ impl Rafy {
         }
 
         //println!("{}", url_info);
-        println!("{}", api_info);
+        //println!("{}", api_info);
 
         let videoid = &basic["video_id"];
         let title = &basic["title"];
@@ -137,6 +139,8 @@ impl Rafy {
         let thumbhigh = &parsed_json["items"][0]["snippet"]["thumbnails"]["high"]["url"];
         let thumbstandard = &parsed_json["items"][0]["snippet"]["thumbnails"]["standard"]["url"];
         let thumbmaxres = &parsed_json["items"][0]["snippet"]["thumbnails"]["maxres"]["url"];
+        let published = &parsed_json["items"][0]["snippet"]["publishedAt"];
+        let category = &parsed_json["items"][0]["snippet"]["categoryId"];
 
         let streams = Self::get_streams(&basic);
 
@@ -156,6 +160,8 @@ impl Rafy {
                 thumbhigh: thumbhigh.to_string(),
                 thumbstandard: thumbstandard.to_string(),
                 thumbmaxres: thumbmaxres.to_string(),
+                published: published.to_string(),
+                category: category.to_string().parse::<u32>().unwrap(),
 
                 streams: streams,
             }
@@ -169,7 +175,6 @@ impl Rafy {
 
         for url in streams.iter() {
             let parsed = Self::parse_url(url);
-
             let extension = &parsed["type"]
                 .split('/')
                 .nth(1)
@@ -179,7 +184,6 @@ impl Rafy {
                 .unwrap();
             let quality = &parsed["quality"];
             let stream_url = &parsed["url"];
-
             let title = &basic["title"];
 
             let parsed_stream = Stream {
