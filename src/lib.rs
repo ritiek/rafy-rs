@@ -17,6 +17,8 @@ use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
 
+/// TEST struct Rafy {}
+
 pub struct Rafy {
     pub videoid: String,
     pub title: String,
@@ -51,8 +53,21 @@ pub struct Stream {
 
 impl Stream {
 
+    /// Downloads a stream.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate rafy;
+    ///
+    /// use rafy:Rafy;
+    ///
+    /// let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+    /// let stream = contents.stream[0];
+    /// stream.download();
+    /// ```
+
     pub fn download(&self) {
-        //download self.url
         let response = Rafy::send_request(&self.url);
         let file_size = Rafy::get_file_size(&response);
         let file_name = format!("{}.{}", &self.title, &self.extension);
@@ -60,11 +75,9 @@ impl Stream {
     }
 
     fn write_file(mut response: Response, title: &str, file_size: u64) {
-        // initialize progressbar
         let mut pb = ProgressBar::new(file_size);
         pb.format("╢▌▌░╟");
 
-        // Download and write to file
         let mut buf = [0; 128 * 1024];
         let mut file = File::create(title).unwrap();
         loop {
@@ -86,6 +99,18 @@ impl Stream {
 
 
 impl Rafy {
+
+    /// Create a Rafy object using the `Rafy::new()` function, giving YouTube URL as the argument.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate rafy;
+    ///
+    /// use rafy::Rafy;
+    ///
+    /// let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+    /// ```
 
     pub fn new(url: &str) -> Rafy {
         // API key to fetch content
@@ -130,7 +155,6 @@ impl Rafy {
         let author = &basic["author"];
         let length = &basic["length_seconds"];
         let thumbdefault = &basic["thumbnail_url"];
-
         let likes = &parsed_json["items"][0]["statistics"]["likeCount"];
         let dislikes = &parsed_json["items"][0]["statistics"]["dislikeCount"];
         let commentcount = &parsed_json["items"][0]["statistics"]["commentCount"];
@@ -151,7 +175,6 @@ impl Rafy {
                 author: author.to_string(),
                 length: length.parse::<u32>().unwrap(),
                 thumbdefault: thumbdefault.to_string(),
-
                 likes: likes.to_string().parse::<u32>().unwrap(),
                 dislikes: dislikes.to_string().parse::<u32>().unwrap(),
                 commentcount: commentcount.to_string().parse::<u32>().unwrap(),
@@ -162,7 +185,6 @@ impl Rafy {
                 thumbmaxres: thumbmaxres.to_string(),
                 published: published.to_string(),
                 category: category.to_string().parse::<u32>().unwrap(),
-
                 streams: streams,
             }
     }
