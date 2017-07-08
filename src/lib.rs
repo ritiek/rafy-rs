@@ -17,35 +17,73 @@ use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
 
-/// TEST struct Rafy {}
+/// Once you have created a Rafy object using Rafy::new(), several data attributes are available
+///
+/// # Examples
+///
+/// ```
+/// extern crate rafy;
+///
+/// use rafy::Rafy;
+///
+/// let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+///
+/// println!("{}", content.title);
+/// println!("{}", content.viewcount);
+///
+/// for stream in content.streams {
+///     println!("{}", stream.url)
+/// }
+/// ```
 
 pub struct Rafy {
+    /// The 11-character video id
     pub videoid: String,
+    /// The title of the video
     pub title: String,
+    /// The rating of the video (0-5)
     pub rating: String,
+    /// The viewcount of the video
     pub viewcount: u32,
+    /// The author of the video
     pub author: String,
+    /// The duration of the streams in seconds
     pub length: u32,
+    /// The url of the video’s thumbnail image
     pub thumbdefault: String,
     //pub duration: String,
+    /// The number of likes received for the video
     pub likes: u32,
+    /// The number of dislikes received for the video
     pub dislikes: u32,
+    /// The commentcount of the video
     pub commentcount: u32,
+    /// The video description text
     pub description: String,
+    /// The available streams
     pub streams: Vec<Stream>,
+    /// The url of the video’s medium size thumbnail image
     pub thumbmedium: String,
+    /// The url of the video’s large size thumbnail image
     pub thumbhigh: String,
-    pub thumbstandard: String,
+    /// The url of the video’s extra large thumbnail image
+    pub thumbstandard: String, 
+    /// The url of the video’s native thumbnail image
     pub thumbmaxres: String,
+    /// The upload date of the video
     pub published: String,
+    /// The category ID of the video
     pub category: u32,
     //pub audiostreams: ,
     //pub allstreams: ,
 }
 
 pub struct Stream {
+    /// The extension of the stream
     pub extension: String,
+    /// The quality of the stream
     pub quality: String,
+    /// The url of the stream
     pub url: String,
     title: String,
 }
@@ -60,7 +98,7 @@ impl Stream {
     /// ```
     /// extern crate rafy;
     ///
-    /// use rafy:Rafy;
+    /// use rafy::Rafy;
     ///
     /// let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
     /// let stream = contents.stream[0];
