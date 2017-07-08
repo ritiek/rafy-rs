@@ -2,9 +2,8 @@ extern crate hyper;
 extern crate hyper_native_tls;
 extern crate pbr;
 extern crate regex;
-extern crate serde_json;
+extern crate json;
 
-use serde_json::{Value};
 use pbr::ProgressBar;
 use std::{process, str};
 use std::collections::HashMap;
@@ -26,7 +25,6 @@ pub struct Rafy {
     pub author: String,
     pub length: u32,
     pub thumbdefault: String,
-    //pub bigthumb: String,
     //pub duration: String,
     pub likes: u32,
     pub dislikes: u32,
@@ -45,6 +43,42 @@ pub struct Stream {
     pub extension: String,
     pub quality: String,
     pub url: String,
+}
+
+
+impl Stream {
+
+    pub fn download(&self) {
+        //download self.url
+        let response = Rafy::send_request(&self.url);
+        let file_size = Rafy::get_file_size(&response);
+        let filename = "test.mp4";
+        Self::write_file(response, &filename, file_size);
+    }
+
+    fn write_file(mut response: Response, title: &str, file_size: u64) {
+        // initialize progressbar
+        let mut pb = ProgressBar::new(file_size);
+        pb.format("â•¢â–Œâ–Œâ–‘â•Ÿ");
+
+        // Download and write to file
+        let mut buf = [0; 128 * 1024];
+        let mut file = File::create(title).unwrap();
+        loop {
+            match response.read(&mut buf) {
+                Ok(len) => {
+                    file.write_all(&buf[..len]).unwrap();
+                    pb.add(len as u64);
+                    if len == 0 {
+                        break;
+                    }
+                    len
+                }
+                Err(why) => panic!("{}", why),
+            };
+        }
+    }
+
 }
 
 
@@ -70,13 +104,13 @@ impl Rafy {
         let mut url_response = Self::send_request(&url_info);
         let mut url_response_str = String::new();
         url_response.read_to_string(&mut url_response_str).unwrap();
-        let mut basic = Self::parse_url(&url_response_str);
+        let basic = Self::parse_url(&url_response_str);
 
         let mut api_response = Self::send_request(&api_info);
         let mut api_response_str = String::new();
         api_response.read_to_string(&mut api_response_str).unwrap();
 
-        let parsed_json: Value = serde_json::from_str(&api_response_str).unwrap();
+        let parsed_json = json::parse(&api_response_str).unwrap();
 
         if basic["status"] != "ok" {
             println!("Video not found!");
@@ -185,4 +219,13 @@ impl Rafy {
                 .collect()
     }
 
+    // get file size from Content-Length header
+    fn get_file_size(response: &Response) -> u64 {
+        let mut file_size = 0;
+        match response.headers.get::<ContentLength>(){
+            Some(length) => file_size = length.0,
+            None => println!("Content-Length header missing"),
+        };
+        file_size
+    }
 }
