@@ -41,6 +41,8 @@ fn main() {
         println!("{}", stream.quality);
         println!("{}", stream.url);
     }
+    
+    content.streams[0].download();
 
 }                                                                                                                                                   
 ```
