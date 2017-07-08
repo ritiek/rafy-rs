@@ -119,7 +119,7 @@ impl Rafy {
         }
 
         //println!("{}", url_info);
-        //println!("{}", api_info);
+        println!("{}", api_info);
 
         let videoid = &basic["video_id"];
         let title = &basic["title"];
@@ -148,23 +148,14 @@ impl Rafy {
                 length: length.parse::<u32>().unwrap(),
                 thumbdefault: thumbdefault.to_string(),
 
-                likes: likes.to_string()
-                            .trim_matches('"')
-                            .parse::<u32>()
-                            .unwrap(),
-                dislikes: dislikes.to_string()
-                            .trim_matches('"')
-                            .parse::<u32>()
-                            .unwrap(),
-                commentcount: commentcount.to_string()
-                            .trim_matches('"')
-                            .parse::<u32>()
-                            .unwrap(),
+                likes: likes.to_string().parse::<u32>().unwrap(),
+                dislikes: dislikes.to_string().parse::<u32>().unwrap(),
+                commentcount: commentcount.to_string().parse::<u32>().unwrap(),
                 description: description.to_string(),
-                thumbmedium: thumbmedium.to_string().trim_matches('"').to_string(),
-                thumbhigh: thumbhigh.to_string().trim_matches('"').to_string(),
-                thumbstandard: thumbstandard.to_string().trim_matches('"').to_string(),
-                thumbmaxres: thumbmaxres.to_string().trim_matches('"').to_string(),
+                thumbmedium: thumbmedium.to_string(),
+                thumbhigh: thumbhigh.to_string(),
+                thumbstandard: thumbstandard.to_string(),
+                thumbmaxres: thumbmaxres.to_string(),
 
                 streams: streams,
             }
