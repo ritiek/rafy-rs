@@ -158,7 +158,7 @@ pub struct Stream {
 
 impl Stream {
 
-    /// Create a `Stream` object by calling `Rafy::new().streams()`.
+    /// Create a `Stream` object by calling `Rafy::new().streams[n]`.
     ///
     /// # Examples
     ///
@@ -168,7 +168,7 @@ impl Stream {
     ///
     /// fn main() {
     ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-    ///     let stream = contents.stream[0];
+    ///     let stream = contents.streams[0];
     /// }
     /// ```
 
