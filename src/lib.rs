@@ -181,7 +181,7 @@ impl Stream {
     /// use rafy::Rafy;
     ///
     /// fn main() {
-    ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+    ///     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk");
     ///     let streams = content.streams;
     ///     let ref stream = streams[0];
     ///     stream.download();
