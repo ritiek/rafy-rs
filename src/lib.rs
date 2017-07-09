@@ -10,9 +10,7 @@
 //!
 //! You need to add the line below in `[dependencies]` section in your `Cargo.toml`
 //!
-//! ```
-//! rafy = "*"
-//! ```
+//! > rafy = "0.1"
 //!
 //! The following example shows how simple it is to use `rafy` to gather information about YouTube
 //! videos.
@@ -20,7 +18,7 @@
 //! ```
 //! extern crate rafy;
 //! use rafy::Rafy;
-//! 
+//!
 //! fn main() {
 //!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
 //!     println!("{}", content.videoid);
@@ -43,14 +41,14 @@
 //! use rafy::Rafy;
 //!
 //! fn main() {
-//!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
-//!     let stream = content.streams[0];
-//!     stream.download();
+//!     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk");
+//!     let streams = content.streams;
+//!     streams[0].download();
 //! }
 //! ```
 //!
 //! ## License
-//! 
+//!
 //! `rafy` is licensed under the MIT license. Please read the [LICENSE](LICENSE) file in
 //! this repository for more information.
 
@@ -157,7 +155,7 @@ pub struct Stream {
     title: String,
 }
 
-/// Create a `Stream` object by calling `Rafy::new().streams[n]`.
+/// Create a `Vec<Stream>` object by calling `Rafy::new().streams` .
 ///
 /// # Examples
 ///
@@ -167,13 +165,14 @@ pub struct Stream {
 ///
 /// fn main() {
 ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-///     let stream = contents.streams[0];
+///     let streams = content.streams;
+///     let ref stream = streams[0];
 /// }
 /// ```
 
 impl Stream {
 
-    /// Downloads the stream from `Stream` object.
+    /// Downloads the content stream from `Stream` object.
     ///
     /// # Examples
     ///
@@ -183,7 +182,8 @@ impl Stream {
     ///
     /// fn main() {
     ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-    ///     let stream = contents.stream[0];
+    ///     let streams = content.streams;
+    ///     let ref stream = streams[0];
     ///     stream.download();
     /// }
     /// ```
@@ -233,7 +233,7 @@ impl Rafy {
     ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
     /// }
     /// ```
-    
+
     pub fn new(url: &str) -> Rafy {
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
@@ -371,3 +371,4 @@ impl Rafy {
         file_size
     }
 }
+
