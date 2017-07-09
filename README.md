@@ -24,32 +24,10 @@ fn main() {
     println!("{}", content.videoid);
     println!("{}", content.title);
     println!("{}", content.rating);
-    println!("{}", content.viewcount);
-    println!("{}", content.author);
-    println!("{}", content.length);
-    println!("{}", content.thumbdefault);
-
-    println!("{}", content.likes);
-    println!("{}", content.dislikes);
-    println!("{}", content.commentcount);
-    println!("{}", content.description);
-    println!("{}", content.thumbmedium);
-    println!("{}", content.thumbhigh);
-    println!("{}", content.thumbstandard);
-    println!("{}", content.thumbmaxres);
-
-    let ref streams = content.streams;
-
-    for stream in streams {
-        println!("{}", stream.extension);
-        println!("{}", stream.quality);
-        println!("{}", stream.url);
-    }
-    
-    streams[0].download();
-
-}                                                                                                                                                   
+    println!("{}", content.viewcount);                                                                                                                           
 ```
+
+For more examples check out the [**Documentation**](https://docs.rs/crate/rafy/).
 
 ## Thanks
 
