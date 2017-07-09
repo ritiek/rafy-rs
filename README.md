@@ -6,11 +6,11 @@ Rust library to fetch YouTube content metadata. An attempt to mimic [pafy](https
 
 ## Installation
 
-Put the below under `[dependencies]` section in your `Cargo.toml`:
+Put the below in your `Cargo.toml`
 
-```
-rafy = "*"
-```
+> [dependencies]
+>
+> rafy = "0.1"
 
 ## Usage Examples
 
@@ -29,6 +29,10 @@ fn main() {
 ```
 
 For more examples check out the [**Documentation**](https://docs.rs/rafy/).
+
+## Running Tests
+
+`cargo test`
 
 ## Thanks
 

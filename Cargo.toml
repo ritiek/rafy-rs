@@ -1,6 +1,6 @@
 [package]
 name = "rafy"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Ritiek <ritiekmalhotra123@gmail.com>"]
 description = "Rust library to download YouTube content and retrieve metadata"
 repository = "https://github.com/ritiek/rafy-rs"
