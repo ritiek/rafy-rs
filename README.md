@@ -24,7 +24,8 @@ fn main() {
     println!("{}", content.videoid);
     println!("{}", content.title);
     println!("{}", content.rating);
-    println!("{}", content.viewcount);                                                                                                                           
+    println!("{}", content.viewcount);
+}
 ```
 
 For more examples check out the [**Documentation**](https://docs.rs/rafy/).
