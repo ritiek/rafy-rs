@@ -51,7 +51,7 @@
 //!
 //! ## License
 //! 
-//! `rafy` is licensed under the MIT license. Please read the [LICENSE-MIT](LICENSE-MIT) file in
+//! `rafy` is licensed under the MIT license. Please read the [LICENSE](LICENSE) file in
 //! this repository for more information.
 
 extern crate hyper;
