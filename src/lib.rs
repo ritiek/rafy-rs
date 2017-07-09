@@ -1,3 +1,57 @@
+//! `rafy` is a simple-to-use library for downloading YouTube content and retrieving metadata.
+//!
+//! ## About
+//!
+//! `rafy` takes the YouTube URL of the video and parses it. It returns fields like title,
+//! author, likes/disklikes and other information about the video. It can also be used to download video
+//! and audio streams with selectable quality.
+//!
+//! ## Quick Example
+//!
+//! You need to add the line below in `[dependencies]` section in your `Cargo.toml`
+//!
+//! ```
+//! rafy = "*"
+//! ```
+//!
+//! The following example shows how simple it is to use `rafy` to gather information about YouTube
+//! videos.
+//!
+//! ```
+//! extern crate rafy;
+//! use rafy::Rafy;
+//! 
+//! fn main() {
+//!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
+//!     println!("{}", content.videoid);
+//!     println!("{}", content.title);
+//!     println!("{}", content.author);
+//!     println!("{}", content.likes);
+//!
+//!     let streams = content.streams;
+//!     for stream in streams {
+//!        println!("{}", stream.extension);
+//!        println!("{}", stream.url);
+//!    }
+//! ```
+//!
+//! You can also download YouTube videos by calling method `download()` on a `Stream` struct.
+//!
+//! ```
+//! extern crate rafy;
+//! use crate rafy::Rafy;
+//!
+//! fn main() {
+//!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
+//!     let stream = content.streams[0];
+//!     stream.download();
+//! ```
+//!
+//! ## License
+//! 
+//! `rafy` is licensed under the MIT license. Please read the [LICENSE-MIT](LICENSE-MIT) file in
+//! this repository for more information.
+
 extern crate hyper;
 extern crate hyper_native_tls;
 extern crate pbr;
