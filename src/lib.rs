@@ -17,7 +17,7 @@ use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
 
-/// Once you have created a Rafy object using Rafy::new(), several data attributes are available
+/// Once you have created a Rafy object using `Rafy::new()`, several data attributes are available.
 ///
 /// # Examples
 ///
@@ -30,10 +30,6 @@ use regex::Regex;
 ///
 /// println!("{}", content.title);
 /// println!("{}", content.viewcount);
-///
-/// for stream in content.streams {
-///     println!("{}", stream.url)
-/// }
 /// ```
 
 pub struct Rafy {
@@ -77,6 +73,23 @@ pub struct Rafy {
     //pub audiostreams: ,
     //pub allstreams: ,
 }
+
+/// After creating a `Stream` struct, you can either download it or view more details about it.
+///
+/// # Examples
+///
+/// ```
+/// extern crate rafy;
+///
+/// use rafy::Rafy;
+///
+/// let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+///
+/// for stream in content.streams {
+///     println!("{}", stream.extension);
+///     stream.download();
+/// }
+/// ```
 
 pub struct Stream {
     /// The extension of the stream
