@@ -3,7 +3,7 @@
 //! ## About
 //!
 //! `rafy` takes the YouTube URL of the video and parses it. It returns fields like title,
-//! author, likes/disklikes and other information about the video. It can also be used to download video
+//! author, likes/dislikes and other information about the video. It can also be used to download video
 //! and audio streams with selectable quality.
 //!
 //! ## Quick Example
