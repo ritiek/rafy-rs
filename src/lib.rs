@@ -40,7 +40,7 @@
 //!
 //! ```
 //! extern crate rafy;
-//! use crate rafy::Rafy;
+//! use rafy::Rafy;
 //!
 //! fn main() {
 //!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
@@ -157,10 +157,23 @@ pub struct Stream {
     title: String,
 }
 
+/// Create a `Stream` object by calling `Rafy::new().streams[n]`.
+///
+/// # Examples
+///
+/// ```
+/// extern crate rafy;
+/// use rafy::Rafy;
+///
+/// fn main() {
+///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+///     let stream = contents.streams[0];
+/// }
+/// ```
 
 impl Stream {
 
-    /// Create a `Stream` object by calling `Rafy::new().streams[n]`.
+    /// Downloads the stream from `Stream` object.
     ///
     /// # Examples
     ///
@@ -170,27 +183,12 @@ impl Stream {
     ///
     /// fn main() {
     ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-    ///     let stream = contents.streams[0];
+    ///     let stream = contents.stream[0];
+    ///     stream.download();
     /// }
     /// ```
 
     pub fn download(&self) {
-        
-        /// Downloads the stream from `Stream` object.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// extern crate rafy;
-        /// use rafy::Rafy;
-        ///
-        /// fn main() {
-        ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-        ///     let stream = contents.stream[0];
-        ///     stream.download();
-        /// }
-        /// ```
-        
         let response = Rafy::send_request(&self.url);
         let file_size = Rafy::get_file_size(&response);
         let file_name = format!("{}.{}", &self.title, &self.extension);
@@ -223,21 +221,20 @@ impl Stream {
 
 impl Rafy {
 
+    /// Create a Rafy object using the `Rafy::new()` function, giving YouTube URL as the argument.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate rafy;
+    /// use rafy::Rafy;
+    ///
+    /// fn main() {
+    ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+    /// }
+    /// ```
+    
     pub fn new(url: &str) -> Rafy {
-        
-        /// Create a Rafy object using the `Rafy::new()` function, giving YouTube URL as the argument.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// extern crate rafy;
-        /// use rafy::Rafy;
-        ///
-        /// fn main() {
-        ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
-        /// }
-        /// ```
-        
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
