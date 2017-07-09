@@ -7,7 +7,7 @@ Rust library to fetch YouTube content metadata. An attempt to mimic [pafy](https
 Put the below under `[dependencies]` section in your `Cargo.toml`:
 
 ```
-rafy = { git = "https://github.com/ritiek/rafy-rs.git" }
+rafy = "*"
 ```
 
 ## Usage Examples
