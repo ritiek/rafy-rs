@@ -49,6 +49,8 @@ fn main() {
 }                                                                                                                                                   
 ```
 
+## [Full Documentation](https://docs.rs/rafy/)
+
 ## Thanks
 
 The base code was adapted from [rust-youtube-downloader](https://github.com/smoqadam/rust-youtube-downloader) by [smoqadam](https://github.com/smoqadam), modified and further extended to suit the library accordingly.
