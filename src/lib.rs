@@ -32,7 +32,8 @@
 //!     for stream in streams {
 //!        println!("{}", stream.extension);
 //!        println!("{}", stream.url);
-//!    }
+//!     }
+//! }
 //! ```
 //!
 //! You can also download YouTube videos by calling method `download()` on a `Stream` struct.
@@ -45,6 +46,7 @@
 //!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
 //!     let stream = content.streams[0];
 //!     stream.download();
+//! }
 //! ```
 //!
 //! ## License
