@@ -32,7 +32,9 @@ For more examples check out the [**Documentation**](https://docs.rs/rafy/).
 
 ## Running Tests
 
-`cargo test`
+```
+cargo test
+```
 
 ## Thanks
 
