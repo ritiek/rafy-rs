@@ -1,6 +1,6 @@
 # rafy
 
-[![Crates.io](https://img.shields.io/crates/v/rafy.svg)](https://crates.io/crates/rafy) [![Docs.rs](https://docs.rs/rafy/badge.svg)](https://docs.rs/rafy/)
+[![Crates.io](https://img.shields.io/crates/v/rafy.svg)](https://crates.io/crates/rafy) [![Docs.rs](https://docs.rs/rafy/badge.svg)](https://docs.rs/rafy/) [![Build Status](https://travis-ci.org/ritiek/rafy-rs.svg?branch=master)](https://travis-ci.org/ritiek/rafy-rs)
 
 Rust library to fetch YouTube content metadata. An attempt to mimic [pafy](https://github.com/mps-youtube/pafy) but in Rust.
 
