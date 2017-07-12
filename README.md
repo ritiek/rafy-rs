@@ -30,6 +30,12 @@ fn main() {
 
 For more examples check out the [**Documentation**](https://docs.rs/rafy/).
 
+## Contributing
+
+- I am not very good at writing Rust code. If there is anything that can be improved or made more efficient, please send a PR.
+
+- Documentation improvements are also most welcome!
+
 ## Running Tests
 
 ```
