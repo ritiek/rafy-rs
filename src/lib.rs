@@ -20,7 +20,7 @@
 //! use rafy::Rafy;
 //!
 //! fn main() {
-//!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg");
+//!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg").unwrap();
 //!     println!("{}", content.videoid);
 //!     println!("{}", content.title);
 //!     println!("{}", content.author);
@@ -41,7 +41,7 @@
 //! use rafy::Rafy;
 //!
 //! fn main() {
-//!     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk");
+//!     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk").unwrap();
 //!     let streams = content.streams;
 //!     streams[0].download();
 //! }
@@ -59,7 +59,7 @@ extern crate regex;
 extern crate json;
 
 use pbr::ProgressBar;
-use std::{process, str};
+use std::str;
 use std::collections::HashMap;
 use hyper::client::response::Response;
 use hyper::Client;
@@ -80,7 +80,7 @@ use regex::Regex;
 /// use rafy::Rafy;
 ///
 /// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
 ///     println!("{}", content.title);
 ///     println!("{}", content.viewcount);
 /// }
@@ -137,7 +137,7 @@ pub struct Rafy {
 /// use rafy::Rafy;
 ///
 /// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
 ///     for stream in content.streams {
 ///         println!("{}", stream.extension);
 ///         println!("{}", stream.url);
@@ -164,7 +164,7 @@ pub struct Stream {
 /// use rafy::Rafy;
 ///
 /// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
 ///     let streams = content.streams;
 ///     let ref stream = streams[0];
 /// }
@@ -181,18 +181,19 @@ impl Stream {
     /// use rafy::Rafy;
     ///
     /// fn main() {
-    ///     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk");
+    ///     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk").unwrap();
     ///     let streams = content.streams;
     ///     let ref stream = streams[0];
     ///     stream.download();
     /// }
     /// ```
 
-    pub fn download(&self) {
-        let response = Rafy::send_request(&self.url);
+    pub fn download(&self) -> hyper::Result<()> {
+        let response = Rafy::send_request(&self.url)?;
         let file_size = Rafy::get_file_size(&response);
         let file_name = format!("{}.{}", &self.title, &self.extension);
         Self::write_file(response, &file_name, file_size);
+        Ok(())
     }
 
     fn write_file(mut response: Response, title: &str, file_size: u64) {
@@ -218,6 +219,14 @@ impl Stream {
 
 }
 
+/// The error type for rafy operations.
+#[derive(Debug)]
+pub enum Error {
+    /// The requested video was not found.
+    VideoNotFound,
+    /// A network request has failed.
+    NetworkRequestFailed(Box<std::error::Error>),
+}
 
 impl Rafy {
 
@@ -234,7 +243,7 @@ impl Rafy {
     /// }
     /// ```
 
-    pub fn new(url: &str) -> Rafy {
+    pub fn new(url: &str) -> Result<Rafy, Error> {
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
@@ -251,20 +260,25 @@ impl Rafy {
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
 
-        let mut url_response = Self::send_request(&url_info);
+        let mut url_response = match Self::send_request(&url_info) {
+            Ok(response) => response,
+            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
+        };
         let mut url_response_str = String::new();
         url_response.read_to_string(&mut url_response_str).unwrap();
         let basic = Self::parse_url(&url_response_str);
 
-        let mut api_response = Self::send_request(&api_info);
+        let mut api_response = match Self::send_request(&api_info) {
+            Ok(response) => response,
+            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
+        };
         let mut api_response_str = String::new();
         api_response.read_to_string(&mut api_response_str).unwrap();
 
         let parsed_json = json::parse(&api_response_str).unwrap();
 
         if basic["status"] != "ok" {
-            println!("Video not found!");
-            process::exit(1);
+            return Err(Error::VideoNotFound)
         }
 
         //println!("{}", url_info);
@@ -290,7 +304,7 @@ impl Rafy {
 
         let streams = Self::get_streams(&basic);
 
-        Rafy {  videoid: videoid.to_string(),
+        Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
                 rating: rating.to_string(),
                 viewcount: viewcount.parse::<u32>().unwrap(),
@@ -308,7 +322,7 @@ impl Rafy {
                 published: published.to_string(),
                 category: category.to_string().parse::<u32>().unwrap(),
                 streams: streams,
-            }
+            })
     }
 
     fn get_streams(basic: &HashMap<String, String>) -> Vec<Stream> {
@@ -343,14 +357,11 @@ impl Rafy {
         parsed_streams
     }
 
-    fn send_request(url: &str) -> Response {
+    fn send_request(url: &str) -> hyper::Result<Response> {
         let ssl = NativeTlsClient::new().unwrap();
         let connector = HttpsConnector::new(ssl);
         let client = Client::with_connector(connector);
-        client.get(url).send().unwrap_or_else(|e| {
-            println!("Network request failed: {}", e);
-            process::exit(1);
-        })
+        client.get(url).send()
     }
 
     fn parse_url(query: &str) -> HashMap<String, String> {
