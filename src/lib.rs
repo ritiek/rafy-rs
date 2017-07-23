@@ -41,7 +41,7 @@
 //! use rafy::Rafy;
 //!
 //! fn main() {
-//!     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk").unwrap();
+//!     let content = Rafy::new("https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
 //!     let title = content.title;
 //!     let streams = content.streams;
 //!     // It is necessary to pass the filename to generate in download()
@@ -189,7 +189,7 @@ impl Stream {
     /// use rafy::Rafy;
     ///
     /// fn main() {
-    ///     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk").unwrap();
+    ///     let content = Rafy::new("https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
     ///     let title = content.title;
     ///     let streams = content.streams;
     ///     let ref stream = streams[0];
@@ -200,7 +200,7 @@ impl Stream {
     ///     let ref audiostream = audiostreams[0];
     ///     audiostream.download(&title);
     ///
-    ///     let videostreams = content.videoostreams;
+    ///     let videostreams = content.videostreams;
     ///     let ref videostream = videostreams[0];
     ///     videostream.download(&title);
     /// }
