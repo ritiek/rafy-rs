@@ -42,8 +42,10 @@
 //!
 //! fn main() {
 //!     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk").unwrap();
+//!     let title = content.title;
 //!     let streams = content.streams;
-//!     streams[0].download();
+//!     // It is necessary to pass the filename to generate in download()
+//!     streams[0].download(&title);
 //! }
 //! ```
 //!
@@ -156,7 +158,6 @@ pub struct Stream {
     pub quality: String,
     /// The url of the stream
     pub url: String,
-    title: String,
 }
 
 /// Create a `Vec<Stream>` object by calling `Rafy::new().streams` .
@@ -186,16 +187,18 @@ impl Stream {
     ///
     /// fn main() {
     ///     let content = Rafy::new("https://www.youtube.com/watch?v=qOOcy2-tmbk").unwrap();
+    ///     let title = content.title;
     ///     let streams = content.streams;
     ///     let ref stream = streams[0];
-    ///     stream.download();
+    ///     // It is necessary to pass the filename to generate in download()
+    ///     stream.download(&title);
     /// }
     /// ```
 
-    pub fn download(&self) -> hyper::Result<()> {
+    pub fn download(&self, title: &str) -> hyper::Result<()> {
         let response = Rafy::send_request(&self.url)?;
         let file_size = Rafy::get_file_size(&response);
-        let file_name = format!("{}.{}", &self.title, &self.extension);
+        let file_name = format!("{}.{}", title, &self.extension);
         Self::write_file(response, &file_name, file_size);
         Ok(())
     }
@@ -306,7 +309,7 @@ impl Rafy {
         let published = &parsed_json["items"][0]["snippet"]["publishedAt"];
         let category = &parsed_json["items"][0]["snippet"]["categoryId"];
 
-        let (streams, videostreams, audiostreams) = Self::get_streams(&basic, &title);
+        let (streams, videostreams, audiostreams) = Self::get_streams(&basic);
 
         Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
@@ -331,7 +334,7 @@ impl Rafy {
             })
     }
 
-    fn get_streams(basic: &HashMap<String, String>, title: &str) -> (Vec<Stream>, Vec<Stream>, Vec<Stream>) {
+    fn get_streams(basic: &HashMap<String, String>) -> (Vec<Stream>, Vec<Stream>, Vec<Stream>) {
         let mut parsed_streams: Vec<Stream> = Vec::new();
         let streams: Vec<&str> = basic["url_encoded_fmt_stream_map"]
             .split(',')
@@ -353,7 +356,6 @@ impl Rafy {
                         extension: extension.to_string(),
                         quality: quality.to_string(),
                         url: stream_url.to_string(),
-                        title: title.to_string()
                     };
 
             parsed_streams.push(parsed_stream);
@@ -384,7 +386,6 @@ impl Rafy {
                                 extension: extension.to_string(),
                                 quality: quality.to_string(),
                                 url: stream_url.to_string(),
-                                title: title.to_string(),
                             };
 
                     parsed_videostreams.push(parsed_videostream);
@@ -396,7 +397,6 @@ impl Rafy {
                                 extension: audio_extension.to_string(),
                                 quality: quality.to_string(),
                                 url: stream_url.to_string(),
-                                title: title.to_string(),
                             };
 
                     parsed_audiostreams.push(parsed_audiostream);
