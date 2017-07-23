@@ -283,8 +283,8 @@ impl Rafy {
             return Err(Error::VideoNotFound)
         }
 
-        println!("{}", url_info);
-        println!("{}", api_info);
+        //println!("{}", url_info);
+        //println!("{}", api_info);
 
         //println!("{:?}", basic);
 
@@ -306,8 +306,7 @@ impl Rafy {
         let published = &parsed_json["items"][0]["snippet"]["publishedAt"];
         let category = &parsed_json["items"][0]["snippet"]["categoryId"];
 
-        let streams = Self::get_streams(&basic);
-        let audiostreams = Self::get_audiostreams(&basic);
+        let (streams, audiostreams) = Self::get_streams(&basic);
 
         Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
@@ -331,13 +330,16 @@ impl Rafy {
             })
     }
 
-    fn get_streams(basic: &HashMap<String, String>) -> Vec<Stream> {
+    fn get_streams(basic: &HashMap<String, String>) -> (Vec<Stream>, Vec<Stream>) {
         let mut parsed_streams: Vec<Stream> = Vec::new();
-        let streams: Vec<&str> = basic["url_encoded_fmt_stream_map"]
+        let mut parsed_audiostreams: Vec<Stream> = Vec::new();
+
+        let streams: Vec<&str> = basic["adaptive_fmts"]
             .split(',')
             .collect();
 
         for url in streams.iter() {
+            //println!("{}", url);
             let parsed = Self::parse_url(url);
             let extension = &parsed["type"]
                 .split('/')
@@ -346,50 +348,11 @@ impl Rafy {
                 .split(';')
                 .next()
                 .unwrap();
-            let quality = &parsed["quality"];
             let stream_url = &parsed["url"];
             let title = "heheh";
 
-            let parsed_stream = Stream {
-                        extension: extension.to_string(),
-                        quality: quality.to_string(),
-                        url: stream_url.to_string(),
-                        title: title.to_string(),
-                    };
-
-            parsed_streams.push(parsed_stream);
-        }
-
-        parsed_streams
-    }
-
-    fn get_audiostreams(basic: &HashMap<String, String>) -> Vec<Stream> {
-        let mut parsed_streams: Vec<Stream> = Vec::new();
-        let streams: Vec<&str> = basic["adaptive_fmts"]
-            .split(',')
-            .collect();
-
-        for x in streams.iter() {
-            println!("{}", x);
-        }
-
-        println!("");
-
-        for url in streams.iter() {
-            println!("{}", url);
-            let parsed = Self::parse_url(url);
             if parsed.contains_key("quality_label") {
-                let extension = &parsed["type"]
-                    .split('/')
-                    .nth(1)
-                    .unwrap()
-                    .split(';')
-                    .next()
-                    .unwrap();
                 let quality = &parsed["quality_label"];
-                let stream_url = &parsed["url"];
-                let title = "heheh";
-
                 let parsed_stream = Stream {
                             extension: extension.to_string(),
                             quality: quality.to_string(),
@@ -398,10 +361,22 @@ impl Rafy {
                         };
 
                 parsed_streams.push(parsed_stream);
+
+            } else {
+                let quality = &parsed["bitrate"];
+                let parsed_audiostream = Stream {
+                            extension: extension.to_string(),
+                            quality: quality.to_string(),
+                            url: stream_url.to_string(),
+                            title: title.to_string(),
+                        };
+
+                parsed_audiostreams.push(parsed_audiostream);
+
             }
         }
 
-        parsed_streams
+        (parsed_streams, parsed_audiostreams)
     }
 
     fn send_request(url: &str) -> hyper::Result<Response> {
