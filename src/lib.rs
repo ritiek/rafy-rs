@@ -362,44 +362,46 @@ impl Rafy {
         let mut parsed_videostreams: Vec<Stream> = Vec::new();
         let mut parsed_audiostreams: Vec<Stream> = Vec::new();
 
-        let streams: Vec<&str> = basic["adaptive_fmts"]
-            .split(',')
-            .collect();
+        if basic.contains_key("adaptive_fmts") {
+            let streams: Vec<&str> = basic["adaptive_fmts"]
+                .split(',')
+                .collect();
 
-        for url in streams.iter() {
-            let parsed = Self::parse_url(url);
-            let extension = &parsed["type"]
-                .split('/')
-                .nth(1)
-                .unwrap()
-                .split(';')
-                .next()
-                .unwrap();
-            let stream_url = &parsed["url"];
+            for url in streams.iter() {
+                let parsed = Self::parse_url(url);
+                let extension = &parsed["type"]
+                    .split('/')
+                    .nth(1)
+                    .unwrap()
+                    .split(';')
+                    .next()
+                    .unwrap();
+                let stream_url = &parsed["url"];
 
-            if parsed.contains_key("quality_label") {
-                let quality = &parsed["quality_label"];
-                let parsed_videostream = Stream {
-                            extension: extension.to_string(),
-                            quality: quality.to_string(),
-                            url: stream_url.to_string(),
-                            title: title.to_string(),
-                        };
+                if parsed.contains_key("quality_label") {
+                    let quality = &parsed["quality_label"];
+                    let parsed_videostream = Stream {
+                                extension: extension.to_string(),
+                                quality: quality.to_string(),
+                                url: stream_url.to_string(),
+                                title: title.to_string(),
+                            };
 
-                parsed_videostreams.push(parsed_videostream);
+                    parsed_videostreams.push(parsed_videostream);
 
-            } else {
-                let audio_extension = if extension == &"mp4" {"m4a"} else {extension};
-                let quality = &parsed["bitrate"];
-                let parsed_audiostream = Stream {
-                            extension: audio_extension.to_string(),
-                            quality: quality.to_string(),
-                            url: stream_url.to_string(),
-                            title: title.to_string(),
-                        };
+                } else {
+                    let audio_extension = if extension == &"mp4" {"m4a"} else {extension};
+                    let quality = &parsed["bitrate"];
+                    let parsed_audiostream = Stream {
+                                extension: audio_extension.to_string(),
+                                quality: quality.to_string(),
+                                url: stream_url.to_string(),
+                                title: title.to_string(),
+                            };
 
-                parsed_audiostreams.push(parsed_audiostream);
+                    parsed_audiostreams.push(parsed_audiostream);
 
+                }
             }
         }
 
