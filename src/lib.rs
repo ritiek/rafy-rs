@@ -288,8 +288,6 @@ impl Rafy {
         //println!("{}", url_info);
         //println!("{}", api_info);
 
-        //println!("{:?}", basic);
-
         let videoid = &basic["video_id"];
         let title = &basic["title"];
         let rating = &basic["avg_rating"];
@@ -370,9 +368,7 @@ impl Rafy {
             .collect();
 
         for url in streams.iter() {
-            //println!("{}", url);
             let parsed = Self::parse_url(url);
-            //println!("{:?}", parsed);
             let extension = &parsed["type"]
                 .split('/')
                 .nth(1)

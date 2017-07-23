@@ -32,7 +32,7 @@ For more examples check out the [**Documentation**](https://docs.rs/rafy/).
 
 ## Contributing
 
-- I am not very good at writing Rust code. If there is anything that can be improved or made more efficient, please send a PR.
+- I am not very good at writing Rust code currently. If there is anything that can be improved or made more efficient, please open an issue or even better, send a PR!. :smile:
 
 - Documentation improvements are also most welcome!
 
@@ -44,7 +44,7 @@ cargo test
 
 ## Thanks
 
-The base code was adapted from [rust-youtube-downloader](https://github.com/smoqadam/rust-youtube-downloader) by [smoqadam](https://github.com/smoqadam), modified and further extended to suit the library accordingly.
+The basic method of extracting streams was adapted from [rust-youtube-downloader](https://github.com/smoqadam/rust-youtube-downloader) by [smoqadam](https://github.com/smoqadam) and was further extended to suit the library accordingly.
 
 ## License
 
