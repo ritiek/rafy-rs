@@ -112,6 +112,8 @@ pub struct Rafy {
     pub description: String,
     /// The available streams (containing both video and audio)
     pub streams: Vec<Stream>,
+    /// The available only-video streams
+    pub videostreams: Vec<Stream>,
     /// The available only-audio streams
     pub audiostreams: Vec<Stream>,
     /// The url of the video’s medium size thumbnail image
@@ -306,7 +308,7 @@ impl Rafy {
         let published = &parsed_json["items"][0]["snippet"]["publishedAt"];
         let category = &parsed_json["items"][0]["snippet"]["categoryId"];
 
-        let (streams, audiostreams) = Self::get_streams(&basic);
+        let (streams, videostreams, audiostreams) = Self::get_streams(&basic);
 
         Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
@@ -326,12 +328,41 @@ impl Rafy {
                 published: published.to_string(),
                 category: category.to_string().parse::<u32>().unwrap(),
                 streams: streams,
+                videostreams: videostreams,
                 audiostreams: audiostreams,
             })
     }
 
-    fn get_streams(basic: &HashMap<String, String>) -> (Vec<Stream>, Vec<Stream>) {
+    fn get_streams(basic: &HashMap<String, String>) -> (Vec<Stream>, Vec<Stream>, Vec<Stream>) {
         let mut parsed_streams: Vec<Stream> = Vec::new();
+        let streams: Vec<&str> = basic["url_encoded_fmt_stream_map"]
+            .split(',')
+            .collect();
+
+        for url in streams.iter() {
+            let parsed = Self::parse_url(url);
+            let extension = &parsed["type"]
+                .split('/')
+                .nth(1)
+                .unwrap()
+                .split(';')
+                .next()
+                .unwrap();
+            let quality = &parsed["quality"];
+            let stream_url = &parsed["url"];
+            let title = &basic["title"];
+
+            let parsed_stream = Stream {
+                        extension: extension.to_string(),
+                        quality: quality.to_string(),
+                        url: stream_url.to_string(),
+                        title: title.to_string()
+                    };
+
+            parsed_streams.push(parsed_stream);
+        }
+
+        let mut parsed_videostreams: Vec<Stream> = Vec::new();
         let mut parsed_audiostreams: Vec<Stream> = Vec::new();
 
         let streams: Vec<&str> = basic["adaptive_fmts"]
@@ -341,6 +372,7 @@ impl Rafy {
         for url in streams.iter() {
             //println!("{}", url);
             let parsed = Self::parse_url(url);
+            //println!("{:?}", parsed);
             let extension = &parsed["type"]
                 .split('/')
                 .nth(1)
@@ -353,14 +385,14 @@ impl Rafy {
 
             if parsed.contains_key("quality_label") {
                 let quality = &parsed["quality_label"];
-                let parsed_stream = Stream {
+                let parsed_videostream = Stream {
                             extension: extension.to_string(),
                             quality: quality.to_string(),
                             url: stream_url.to_string(),
                             title: title.to_string(),
                         };
 
-                parsed_streams.push(parsed_stream);
+                parsed_videostreams.push(parsed_videostream);
 
             } else {
                 let quality = &parsed["bitrate"];
@@ -376,7 +408,7 @@ impl Rafy {
             }
         }
 
-        (parsed_streams, parsed_audiostreams)
+        (parsed_streams, parsed_videostreams, parsed_audiostreams)
     }
 
     fn send_request(url: &str) -> hyper::Result<Response> {
