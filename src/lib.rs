@@ -306,7 +306,7 @@ impl Rafy {
         let published = &parsed_json["items"][0]["snippet"]["publishedAt"];
         let category = &parsed_json["items"][0]["snippet"]["categoryId"];
 
-        let (streams, videostreams, audiostreams) = Self::get_streams(&basic);
+        let (streams, videostreams, audiostreams) = Self::get_streams(&basic, &title);
 
         Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
@@ -331,7 +331,7 @@ impl Rafy {
             })
     }
 
-    fn get_streams(basic: &HashMap<String, String>) -> (Vec<Stream>, Vec<Stream>, Vec<Stream>) {
+    fn get_streams(basic: &HashMap<String, String>, title: &str) -> (Vec<Stream>, Vec<Stream>, Vec<Stream>) {
         let mut parsed_streams: Vec<Stream> = Vec::new();
         let streams: Vec<&str> = basic["url_encoded_fmt_stream_map"]
             .split(',')
@@ -348,7 +348,6 @@ impl Rafy {
                 .unwrap();
             let quality = &parsed["quality"];
             let stream_url = &parsed["url"];
-            let title = &basic["title"];
 
             let parsed_stream = Stream {
                         extension: extension.to_string(),
@@ -377,7 +376,6 @@ impl Rafy {
                 .next()
                 .unwrap();
             let stream_url = &parsed["url"];
-            let title = "heheh";
 
             if parsed.contains_key("quality_label") {
                 let quality = &parsed["quality_label"];
@@ -391,9 +389,10 @@ impl Rafy {
                 parsed_videostreams.push(parsed_videostream);
 
             } else {
+                let audio_extension = if extension == &"mp4" {"m4a"} else {extension};
                 let quality = &parsed["bitrate"];
                 let parsed_audiostream = Stream {
-                            extension: extension.to_string(),
+                            extension: audio_extension.to_string(),
                             quality: quality.to_string(),
                             url: stream_url.to_string(),
                             title: title.to_string(),

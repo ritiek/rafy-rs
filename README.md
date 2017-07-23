@@ -32,7 +32,7 @@ For more examples check out the [**Documentation**](https://docs.rs/rafy/).
 
 ## Contributing
 
-- I am not very good at writing Rust code currently. If there is anything that can be improved or made more efficient, please open an issue or even better, send a PR!. :smile:
+- I am not very good at writing Rust code currently. If there is anything that can be improved or made more efficient, please open an issue or even better, send a PR! :smile:
 
 - Documentation improvements are also most welcome!
 
