@@ -110,14 +110,16 @@ pub struct Rafy {
     pub commentcount: u32,
     /// The video description text
     pub description: String,
-    /// The available streams
+    /// The available streams (containing both video and audio)
     pub streams: Vec<Stream>,
+    /// The available only-audio streams
+    pub audiostreams: Vec<Stream>,
     /// The url of the video’s medium size thumbnail image
     pub thumbmedium: String,
     /// The url of the video’s large size thumbnail image
     pub thumbhigh: String,
     /// The url of the video’s extra large thumbnail image
-    pub thumbstandard: String, 
+    pub thumbstandard: String,
     /// The url of the video’s native thumbnail image
     pub thumbmaxres: String,
     /// The upload date of the video
@@ -281,8 +283,10 @@ impl Rafy {
             return Err(Error::VideoNotFound)
         }
 
-        //println!("{}", url_info);
-        //println!("{}", api_info);
+        println!("{}", url_info);
+        println!("{}", api_info);
+
+        //println!("{:?}", basic);
 
         let videoid = &basic["video_id"];
         let title = &basic["title"];
@@ -303,6 +307,7 @@ impl Rafy {
         let category = &parsed_json["items"][0]["snippet"]["categoryId"];
 
         let streams = Self::get_streams(&basic);
+        let audiostreams = Self::get_audiostreams(&basic);
 
         Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
@@ -322,6 +327,7 @@ impl Rafy {
                 published: published.to_string(),
                 category: category.to_string().parse::<u32>().unwrap(),
                 streams: streams,
+                audiostreams: audiostreams,
             })
     }
 
@@ -342,16 +348,57 @@ impl Rafy {
                 .unwrap();
             let quality = &parsed["quality"];
             let stream_url = &parsed["url"];
-            let title = &basic["title"];
+            let title = "heheh";
 
             let parsed_stream = Stream {
                         extension: extension.to_string(),
                         quality: quality.to_string(),
                         url: stream_url.to_string(),
-                        title: title.to_string()
+                        title: title.to_string(),
                     };
 
             parsed_streams.push(parsed_stream);
+        }
+
+        parsed_streams
+    }
+
+    fn get_audiostreams(basic: &HashMap<String, String>) -> Vec<Stream> {
+        let mut parsed_streams: Vec<Stream> = Vec::new();
+        let streams: Vec<&str> = basic["adaptive_fmts"]
+            .split(',')
+            .collect();
+
+        for x in streams.iter() {
+            println!("{}", x);
+        }
+
+        println!("");
+
+        for url in streams.iter() {
+            println!("{}", url);
+            let parsed = Self::parse_url(url);
+            if parsed.contains_key("quality_label") {
+                let extension = &parsed["type"]
+                    .split('/')
+                    .nth(1)
+                    .unwrap()
+                    .split(';')
+                    .next()
+                    .unwrap();
+                let quality = &parsed["quality_label"];
+                let stream_url = &parsed["url"];
+                let title = "heheh";
+
+                let parsed_stream = Stream {
+                            extension: extension.to_string(),
+                            quality: quality.to_string(),
+                            url: stream_url.to_string(),
+                            title: title.to_string(),
+                        };
+
+                parsed_streams.push(parsed_stream);
+            }
         }
 
         parsed_streams
