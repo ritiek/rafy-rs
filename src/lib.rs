@@ -46,6 +46,9 @@
 //!     let streams = content.streams;
 //!     // It is necessary to pass the filename to generate in download()
 //!     streams[0].download(&title);
+//!
+//!     let audiostreams = content.audiostreams;
+//!     audiostreams[0].download(&title);
 //! }
 //! ```
 //!
@@ -192,6 +195,14 @@ impl Stream {
     ///     let ref stream = streams[0];
     ///     // It is necessary to pass the filename to generate in download()
     ///     stream.download(&title);
+    ///
+    ///     let audiostreams = content.audiostreams;
+    ///     let ref audiostream = audiostreams[0];
+    ///     audiostream.download(&title);
+    ///
+    ///     let videostreams = content.videoostreams;
+    ///     let ref videostream = videostreams[0];
+    ///     videostream.download(&title);
     /// }
     /// ```
 
