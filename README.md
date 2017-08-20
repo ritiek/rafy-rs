@@ -49,7 +49,7 @@ cargo test
 
 ## Thanks
 
-The basic method of extracting streams was adapted from [rust-youtube-downloader](https://github.com/smoqadam/rust-youtube-downloader) by [smoqadam](https://github.com/smoqadam) and was further extended to suit the library accordingly.
+The basic method of extracting streams was stolen from [rust-youtube-downloader](https://github.com/smoqadam/rust-youtube-downloader) by [smoqadam](https://github.com/smoqadam).
 
 ## License
 
