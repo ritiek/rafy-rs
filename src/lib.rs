@@ -91,6 +91,7 @@ use regex::Regex;
 /// }
 /// ```
 
+#[derive(Debug, Clone)]
 pub struct Rafy {
     /// The 11-character video id
     pub videoid: String,
@@ -154,6 +155,7 @@ pub struct Rafy {
 /// }
 /// ```
 
+#[derive(Debug, Clone)]
 pub struct Stream {
     /// The extension of the stream
     pub extension: String,
