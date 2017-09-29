@@ -62,6 +62,8 @@ extern crate hyper_native_tls;
 extern crate pbr;
 extern crate regex;
 extern crate json;
+#[macro_use]
+extern crate error_chain;
 
 use pbr::ProgressBar;
 use std::str;
@@ -75,6 +77,10 @@ use std::io::Read;
 use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
+
+pub mod errors;
+
+use errors::*;
 
 /// Once you have created a Rafy object using `Rafy::new()`, several data attributes are available.
 ///
@@ -239,15 +245,6 @@ impl Stream {
 
 }
 
-/// The error type for rafy operations.
-#[derive(Debug)]
-pub enum Error {
-    /// The requested video was not found.
-    VideoNotFound,
-    /// A network request has failed.
-    NetworkRequestFailed(Box<std::error::Error>),
-}
-
 impl Rafy {
 
     /// Create a Rafy object using the `Rafy::new()` function, giving YouTube URL as the argument.
@@ -263,7 +260,7 @@ impl Rafy {
     /// }
     /// ```
 
-    pub fn new(url: &str) -> Result<Rafy, Error> {
+    pub fn new(url: &str) -> Result<Rafy> {
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
@@ -280,25 +277,19 @@ impl Rafy {
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
 
-        let mut url_response = match Self::send_request(&url_info) {
-            Ok(response) => response,
-            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
-        };
+        let mut url_response = Self::send_request(&url_info)?;
         let mut url_response_str = String::new();
         url_response.read_to_string(&mut url_response_str).unwrap();
         let basic = Self::parse_url(&url_response_str);
 
-        let mut api_response = match Self::send_request(&api_info) {
-            Ok(response) => response,
-            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
-        };
+        let mut api_response = Self::send_request(&api_info)?; 
         let mut api_response_str = String::new();
         api_response.read_to_string(&mut api_response_str).unwrap();
 
         let parsed_json = json::parse(&api_response_str).unwrap();
 
         if basic["status"] != "ok" {
-            return Err(Error::VideoNotFound)
+            return Err(ErrorKind::VideoNotFound("placeholder".to_string()).into())
         }
 
         //println!("{}", url_info);
