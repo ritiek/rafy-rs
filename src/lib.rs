@@ -70,7 +70,7 @@ use hyper::client::response::Response;
 use hyper::Client;
 use hyper::net::HttpsConnector;
 use hyper_native_tls::NativeTlsClient;
-use hyper::header::ContentLength;
+use hyper::header::{ContentLength, Headers, ByteRangeSpec, Range};
 use std::io::Read;
 use std::io::prelude::*;
 use std::fs::File;
@@ -425,7 +425,10 @@ impl Rafy {
         let ssl = NativeTlsClient::new().unwrap();
         let connector = HttpsConnector::new(ssl);
         let client = Client::with_connector(connector);
-        client.get(url).send()
+        // Pass custom headers to fix speed throttle (issue #10)
+        let mut header = Headers::new();
+        header.set(Range::Bytes(vec![ByteRangeSpec::AllFrom(0)]));
+        client.get(url).headers(header).send()
     }
 
     fn parse_url(query: &str) -> HashMap<String, String> {
