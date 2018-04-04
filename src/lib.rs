@@ -52,6 +52,24 @@
 //! }
 //! ```
 //!
+//! The `youtube-dl` Python library can be used as backend:
+//!
+//! ```
+//! extern crate rafy;
+//! use rafy::Rafy;
+//!
+//! fn main() {
+//!     let content = Rafy::new_with_youtube_dl("https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
+//!     let title = content.title;
+//!     let streams = content.streams;
+//!     // It is necessary to pass the filename to generate in download()
+//!     streams[0].download(&title);
+//!
+//!     let audiostreams = content.audiostreams;
+//!     audiostreams[0].download(&title);
+//! }
+//! ```
+//!
 //! ## License
 //!
 //! `rafy` is licensed under the MIT license. Please read the [LICENSE](LICENSE) file in
@@ -62,6 +80,9 @@ extern crate hyper_native_tls;
 extern crate pbr;
 extern crate regex;
 extern crate json;
+extern crate cpython;
+#[macro_use]
+extern crate error_chain;
 
 use pbr::ProgressBar;
 use std::str;
@@ -75,6 +96,10 @@ use std::io::Read;
 use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
+use cpython::{Python, PyDict, ObjectProtocol, PyObject, PyList, PythonObject};
+
+mod err;
+use err::*;
 
 /// Once you have created a Rafy object using `Rafy::new()`, several data attributes are available.
 ///
@@ -90,6 +115,125 @@ use regex::Regex;
 ///     println!("{}", content.viewcount);
 /// }
 /// ```
+
+
+/// After creating a `Stream` struct, you can check its attributes or call methods on it.
+///
+/// # Examples
+///
+/// ```
+/// extern crate rafy;
+/// use rafy::Rafy;
+///
+/// fn main() {
+///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
+///     for stream in content.streams {
+///         println!("{}", stream.extension);
+///         println!("{}", stream.url);
+///     }
+/// }
+/// ```
+
+#[derive(Debug, Clone)]
+pub struct Stream {
+    /// The extension of the stream
+    pub extension: String,
+    /// The quality of the stream
+    pub quality: String,
+    /// The url of the stream
+    pub url: String,
+}
+impl Stream {
+    pub fn from_py_dict(py: Python, info: &PyDict) -> Result<Stream> {
+        let extension = info.get_item(py, "ext").unwrap()
+                            .extract::<String>(py)?;
+        let quality = info.get_item(py, "abr")
+                          .map_or(Ok(0), |obj| obj.extract::<u32>(py))?;
+        let url = info.get_item(py, "url").unwrap()
+                      .extract::<String>(py)?;
+        Ok(Stream {
+            extension: extension,
+            quality: format!("{}", quality), // TODO: quality is maybe better u32
+            url: url,
+        })
+    }
+}
+
+/// Create a `Vec<Stream>` object by calling `Rafy::new().streams` .
+///
+/// # Examples
+///
+/// ```
+/// extern crate rafy;
+/// use rafy::Rafy;
+///
+/// fn main() {
+///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
+///     let streams = content.streams;
+///     let ref stream = streams[0];
+/// }
+/// ```
+
+impl Stream {
+
+    /// Downloads the content stream from `Stream` object.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate rafy;
+    /// use rafy::Rafy;
+    ///
+    /// fn main() {
+    ///     let content = Rafy::new("https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
+    ///     let title = content.title;
+    ///     let streams = content.streams;
+    ///     let ref stream = streams[0];
+    ///     // It is necessary to pass the filename to generate in download()
+    ///     stream.download(&title);
+    ///
+    ///     let audiostreams = content.audiostreams;
+    ///     let ref audiostream = audiostreams[0];
+    ///     audiostream.download(&title);
+    ///
+    ///     let videostreams = content.videostreams;
+    ///     let ref videostream = videostreams[0];
+    ///     videostream.download(&title);
+    /// }
+    /// ```
+
+    pub fn download(&self, title: &str) -> Result<()> {
+        let response = Rafy::send_request(&self.url)?;
+        let file_size = Rafy::get_file_size(&response);
+        let file_name = format!("{}.{}", title, &self.extension);
+        Self::write_file(response, &file_name, file_size)?;
+        Ok(())
+    }
+
+    fn write_file(mut response: Response, title: &str, file_size: u64) -> Result<()> {
+        let mut pb = ProgressBar::new(file_size);
+        pb.format("╢▌▌░╟");
+
+        let mut buf = [0; 128 * 1024];
+        let mut file = File::create(title)?;
+        loop {
+            match response.read(&mut buf) {
+                Ok(len) => {
+                    file.write_all(&buf[..len])?;
+                    pb.add(len as u64);
+                    if len == 0 {
+                        break;
+                    }
+                    len
+                }
+                Err(why) => bail!("{}", why),
+            };
+        }
+        Ok(())
+    }
+
+}
+
 
 #[derive(Debug, Clone)]
 pub struct Rafy {
@@ -138,114 +282,98 @@ pub struct Rafy {
     //pub allstreams: ,
 }
 
-/// After creating a `Stream` struct, you can check its attributes or call methods on it.
-///
-/// # Examples
-///
-/// ```
-/// extern crate rafy;
-/// use rafy::Rafy;
-///
-/// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
-///     for stream in content.streams {
-///         println!("{}", stream.extension);
-///         println!("{}", stream.url);
-///     }
-/// }
-/// ```
+/// With youtube-dl backend
+impl Rafy {
+    pub fn new_with_youtube_dl(url: &str) -> Result<Rafy> {
+        let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
 
-#[derive(Debug, Clone)]
-pub struct Stream {
-    /// The extension of the stream
-    pub extension: String,
-    /// The quality of the stream
-    pub quality: String,
-    /// The url of the stream
-    pub url: String,
-}
+        let videoid = if url_regex.is_match(url) {
+            let vid_split = url_regex.captures(url).unwrap();
+            vid_split.get(1).unwrap().as_str()
+        } else {
+            url
+        };
 
-/// Create a `Vec<Stream>` object by calling `Rafy::new().streams` .
-///
-/// # Examples
-///
-/// ```
-/// extern crate rafy;
-/// use rafy::Rafy;
-///
-/// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
-///     let streams = content.streams;
-///     let ref stream = streams[0];
-/// }
-/// ```
-
-impl Stream {
-
-    /// Downloads the content stream from `Stream` object.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// extern crate rafy;
-    /// use rafy::Rafy;
-    ///
-    /// fn main() {
-    ///     let content = Rafy::new("https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
-    ///     let title = content.title;
-    ///     let streams = content.streams;
-    ///     let ref stream = streams[0];
-    ///     // It is necessary to pass the filename to generate in download()
-    ///     stream.download(&title);
-    ///
-    ///     let audiostreams = content.audiostreams;
-    ///     let ref audiostream = audiostreams[0];
-    ///     audiostream.download(&title);
-    ///
-    ///     let videostreams = content.videostreams;
-    ///     let ref videostream = videostreams[0];
-    ///     videostream.download(&title);
-    /// }
-    /// ```
-
-    pub fn download(&self, title: &str) -> hyper::Result<()> {
-        let response = Rafy::send_request(&self.url)?;
-        let file_size = Rafy::get_file_size(&response);
-        let file_name = format!("{}.{}", title, &self.extension);
-        Self::write_file(response, &file_name, file_size);
-        Ok(())
-    }
-
-    fn write_file(mut response: Response, title: &str, file_size: u64) {
-        let mut pb = ProgressBar::new(file_size);
-        pb.format("╢▌▌░╟");
-
-        let mut buf = [0; 128 * 1024];
-        let mut file = File::create(title).unwrap();
-        loop {
-            match response.read(&mut buf) {
-                Ok(len) => {
-                    file.write_all(&buf[..len]).unwrap();
-                    pb.add(len as u64);
-                    if len == 0 {
-                        break;
-                    }
-                    len
-                }
-                Err(why) => panic!("{}", why),
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let youtube_dl = py.import("youtube_dl")?;
+        // In pafy, these options are sent in a python dict::
+        //  def_ydl_opts = {'quiet': True, 'prefer_insecure': True, 'no_warnings': True}
+        let ydl_info = {
+            let ydl = {
+                let kwargs = PyDict::new(py);
+                kwargs.set_item(py, "quiet", py.True())?;
+                kwargs.set_item(py, "prefer_insecure", py.True())?;
+                kwargs.set_item(py, "no_warnings", py.True())?;
+                youtube_dl.get(py, "YoutubeDL")?.call(py, (kwargs,), None)?
             };
-        }
+            let kwargs = PyDict::new(py);
+            kwargs.set_item(py, "download", py.False())?;
+            ydl.call_method(py, "extract_info", (videoid,), Some(&kwargs))?
+                .cast_into::<PyDict>(py).unwrap()
+        };
+        let (allstreams, audiostreams, videostreams) = Rafy::get_streams_with_youtube_dl(py, &ydl_info)?;
+
+        Ok(Rafy {
+            videoid: videoid.to_string(), // TODO is this right?
+            title: Rafy::get_string(py, &ydl_info, "title")?,
+            rating: format!("{}", Rafy::get_u32(py, &ydl_info, "average_rating")?),
+            viewcount: Rafy::get_u32(py, &ydl_info, "view_count")?,
+            author: Rafy::get_string(py, &ydl_info, "uploader")?,
+            length: Rafy::get_u32(py, &ydl_info, "duration")?,
+            thumbdefault: Rafy::get_string(py, &ydl_info, "thumbnail")?,
+            likes: Rafy::get_u32(py, &ydl_info, "like_count")?,
+            dislikes: Rafy::get_u32(py, &ydl_info, "dislike_count")?,
+            commentcount: 0, // TODO
+            description: Rafy::get_string(py, &ydl_info, "description")?,
+            thumbmedium: Rafy::get_string(py, &ydl_info, "thumbnail")?,
+            thumbhigh: Rafy::get_string(py, &ydl_info, "thumbnail")?,
+            thumbstandard: Rafy::get_string(py, &ydl_info, "thumbnail")?,
+            thumbmaxres: Rafy::get_string(py, &ydl_info, "thumbnail")?,
+            published: Rafy::get_string(py, &ydl_info, "upload_date")?,
+            category: 0, // TODO "categories"?
+            streams: allstreams,
+            videostreams: videostreams,
+            audiostreams: audiostreams,
+        })
     }
 
-}
+    fn get_string(py: Python, dict: &PyDict, key: &str) -> Result<String> {
+        Ok(dict.get_item(py, key).ok_or_else(|| format!("{} not found in dict", key))?
+           .extract::<String>(py).map_err(|_| format!("{} found in dict but not String", key))?)
+    }
+    fn get_u32(py: Python, dict: &PyDict, key: &str) -> Result<u32> {
+        Ok(dict.get_item(py, key).unwrap()
+           .extract::<u32>(py)?)
+    }
 
-/// The error type for rafy operations.
-#[derive(Debug)]
-pub enum Error {
-    /// The requested video was not found.
-    VideoNotFound,
-    /// A network request has failed.
-    NetworkRequestFailed(Box<std::error::Error>),
+
+    fn get_streams_with_youtube_dl(py: Python, info: &PyDict) -> Result<(Vec<Stream>, Vec<Stream>, Vec<Stream>)> {
+        let formats: PyList = info.get_item(py, "formats").unwrap().extract::<PyList>(py)?;
+        let all_stream_infos: Vec<PyDict> = formats.iter(py)
+            .map(|obj| obj.extract::<PyDict>(py).unwrap()) // TODO make it return Result<_> which can be `?`d
+            .collect();
+
+        let mut all_streams = Vec::new();
+        let mut audio_streams = Vec::new();
+        let mut video_streams = Vec::new();
+        for stream_info in all_stream_infos {
+            let stream = Stream::from_py_dict(py, &stream_info)?;
+            let vcodec = Rafy::get_string(py, &stream_info, "vcodec")?;
+            let acodec = Rafy::get_string(py, &stream_info, "acodec")?;
+            all_streams.push(stream.clone());
+            if acodec != "none" && vcodec == "none" {
+                // Audio
+                audio_streams.push(stream);
+            } else if acodec == "none" && vcodec != "none" {
+                // Video
+                video_streams.push(stream);
+            } else {
+                // Normal (?)
+            }
+        }
+        Ok((all_streams, audio_streams, video_streams))
+    }
 }
 
 impl Rafy {
@@ -263,42 +391,43 @@ impl Rafy {
     /// }
     /// ```
 
-    pub fn new(url: &str) -> Result<Rafy, Error> {
+
+    pub fn new(url: &str) -> Result<Rafy> {
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
         let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
-        let mut vid = url;
+        // let mut vid = url;
 
-        if url_regex.is_match(vid) {
-            let vid_split = url_regex.captures(vid).unwrap();
-            vid = vid_split.get(1)
-                    .unwrap()
-                    .as_str();
-        }
+        let vid = if url_regex.is_match(url) {
+            let vid_split = url_regex.captures(url).unwrap();
+            vid_split.get(1).unwrap().as_str()
+        } else {
+            url
+        };
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
 
         let mut url_response = match Self::send_request(&url_info) {
             Ok(response) => response,
-            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
+            Err(e) => bail!(Error::with_chain(e, ErrorKind::NetworkRequestFailed{})),
         };
         let mut url_response_str = String::new();
-        url_response.read_to_string(&mut url_response_str).unwrap();
+        url_response.read_to_string(&mut url_response_str)?;
         let basic = Self::parse_url(&url_response_str);
 
         let mut api_response = match Self::send_request(&api_info) {
             Ok(response) => response,
-            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
+            Err(e) => bail!(Error::with_chain(e, ErrorKind::NetworkRequestFailed{})),
         };
         let mut api_response_str = String::new();
-        api_response.read_to_string(&mut api_response_str).unwrap();
+        api_response.read_to_string(&mut api_response_str)?;
 
-        let parsed_json = json::parse(&api_response_str).unwrap();
+        let parsed_json = json::parse(&api_response_str)?;
 
         if basic["status"] != "ok" {
-            return Err(Error::VideoNotFound)
+            bail!(ErrorKind::VideoNotFound)
         }
 
         //println!("{}", url_info);
@@ -327,20 +456,20 @@ impl Rafy {
         Ok(Rafy {  videoid: videoid.to_string(),
                 title: title.to_string(),
                 rating: rating.to_string(),
-                viewcount: viewcount.parse::<u32>().unwrap(),
+                viewcount: viewcount.parse::<u32>()?,
                 author: author.to_string(),
-                length: length.parse::<u32>().unwrap(),
+                length: length.parse::<u32>()?,
                 thumbdefault: thumbdefault.to_string(),
-                likes: likes.to_string().parse::<u32>().unwrap(),
-                dislikes: dislikes.to_string().parse::<u32>().unwrap(),
-                commentcount: commentcount.to_string().parse::<u32>().unwrap(),
+                likes: likes.to_string().parse::<u32>()?,
+                dislikes: dislikes.to_string().parse::<u32>()?,
+                commentcount: commentcount.to_string().parse::<u32>()?,
                 description: description.to_string(),
                 thumbmedium: thumbmedium.to_string(),
                 thumbhigh: thumbhigh.to_string(),
                 thumbstandard: thumbstandard.to_string(),
                 thumbmaxres: thumbmaxres.to_string(),
                 published: published.to_string(),
-                category: category.to_string().parse::<u32>().unwrap(),
+                category: category.to_string().parse::<u32>()?,
                 streams: streams,
                 videostreams: videostreams,
                 audiostreams: audiostreams,
@@ -421,14 +550,14 @@ impl Rafy {
         (parsed_streams, parsed_videostreams, parsed_audiostreams)
     }
 
-    fn send_request(url: &str) -> hyper::Result<Response> {
-        let ssl = NativeTlsClient::new().unwrap();
+    fn send_request(url: &str) -> Result<Response> {
+        let ssl = NativeTlsClient::new()?;
         let connector = HttpsConnector::new(ssl);
         let client = Client::with_connector(connector);
         // Pass custom headers to fix speed throttle (issue #10)
         let mut header = Headers::new();
         header.set(Range::Bytes(vec![ByteRangeSpec::AllFrom(0)]));
-        client.get(url).headers(header).send()
+        Ok(client.get(url).headers(header).send()?)
     }
 
     fn parse_url(query: &str) -> HashMap<String, String> {
