@@ -76,7 +76,7 @@ pub struct Video<B: Backend> {
 }
 
 impl<B: Backend> Video<B> {
-    pub fn new(url: &str) -> Result<Video<B>> {
+    pub fn new(url: &str) -> Result<Video<B>, Error> {
         B::new_video(url)
     }
 }
@@ -99,12 +99,12 @@ pub trait Backend: Sized {
     ///     let content = Video::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
     /// }
     /// ```
-    fn new_video(url: &str) -> Result<Video<Self>>;
+    fn new_video(url: &str) -> Result<Video<Self>, Error>;
 }
 
 pub struct Internal {}
 impl Backend for Internal {
-    fn new_video(url: &str) -> Result<Video<Internal>> {
+    fn new_video(url: &str) -> Result<Video<Internal>, Error> {
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
@@ -121,25 +121,19 @@ impl Backend for Internal {
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
 
-        let mut url_response = match ::send_request(&url_info) {
-            Ok(response) => response,
-            Err(e) => bail!(Error::with_chain(e, ErrorKind::NetworkRequestFailed{})),
-        };
+        let mut url_response = ::send_request(&url_info)?;
         let mut url_response_str = String::new();
         url_response.read_to_string(&mut url_response_str)?;
         let basic = ::parse_url(&url_response_str);
 
-        let mut api_response = match ::send_request(&api_info) {
-            Ok(response) => response,
-            Err(e) => bail!(Error::with_chain(e, ErrorKind::NetworkRequestFailed{})),
-        };
+        let mut api_response = ::send_request(&api_info)?;
         let mut api_response_str = String::new();
         api_response.read_to_string(&mut api_response_str)?;
 
         let parsed_json = json::parse(&api_response_str)?;
 
         if basic["status"] != "ok" {
-            bail!(ErrorKind::VideoNotFound)
+            Err(RafyErr::VideoNotFound (vid.to_string()))?;
         }
 
         //println!("{}", url_info);
@@ -193,8 +187,8 @@ impl Backend for Internal {
 
 pub struct YoutubeDL {}
 impl Backend for YoutubeDL {
-    fn new_video(url: &str) -> Result<Video<YoutubeDL>> {
-        let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
+    fn new_video(url: &str) -> Result<Video<YoutubeDL>, Error> {
+        let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*")?;
 
         let videoid = if url_regex.is_match(url) {
             let vid_split = url_regex.captures(url).unwrap();
@@ -250,17 +244,17 @@ impl Backend for YoutubeDL {
 
 }
 
-fn get_string(py: Python, dict: &PyDict, key: &str) -> Result<String> {
-    Ok(dict.get_item(py, key).ok_or_else(|| format!("{} not found in dict", key))?
-       .extract::<String>(py).map_err(|_| format!("{} found in dict but not String", key))?)
+fn get_string(py: Python, dict: &PyDict, key: &str) -> Result<String, Error> {
+    Ok(dict.get_item(py, key).ok_or_else(|| format_err!("{} not found in dict", key))?
+       .extract::<String>(py).map_err(|_| format_err!("{} found in dict but not String", key))?)
 }
-fn get_u32(py: Python, dict: &PyDict, key: &str) -> Result<u32> {
+fn get_u32(py: Python, dict: &PyDict, key: &str) -> Result<u32, Error> {
     Ok(dict.get_item(py, key).unwrap()
        .extract::<u32>(py)?)
 }
 
 
-fn get_streams_with_youtube_dl(py: Python, info: &PyDict) -> Result<(Vec<Stream>, Vec<Stream>, Vec<Stream>)> {
+fn get_streams_with_youtube_dl(py: Python, info: &PyDict) -> Result<(Vec<Stream>, Vec<Stream>, Vec<Stream>), Error> {
     let formats: PyList = info.get_item(py, "formats").unwrap().extract::<PyList>(py)?;
     let all_stream_infos: Vec<PyDict> = formats.iter(py)
         .map(|obj| obj.extract::<PyDict>(py).unwrap()) // TODO make it return Result<_> which can be `?`d

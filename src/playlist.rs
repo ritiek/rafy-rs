@@ -1,4 +1,5 @@
 use err::*;
+// use failure::err_msg;
 use video::*;
 
 use std::str;
@@ -7,7 +8,7 @@ use std::marker::PhantomData;
 
 
 /// The rationale behind `PlaylistElement` is that it takes some time to get the info for each
-/// `Video`. Hence this should happen only at the programmer's request.
+/// `Video`. Hence this should happen only at the programmer's request (`video()`).
 pub struct PlaylistElement<B: Backend> {
     pub url: String,
     _marker: PhantomData<B>,
@@ -19,7 +20,7 @@ impl<B: Backend> PlaylistElement<B> {
             _marker: PhantomData,
         }
     }
-    pub fn video(self) -> Result<Video<B>> {
+    pub fn video(self) -> Result<Video<B>, Error> {
         Video::<B>::new(&self.url)
     }
 }
@@ -32,7 +33,7 @@ pub struct Playlist<B: Backend> {
 }
 
 impl<B: Backend> Playlist<B> {
-    pub fn new(url: &str) -> Result<Playlist<B>> {
+    pub fn new(url: &str) -> Result<Playlist<B>, Error> {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let youtube_dl = py.import("youtube_dl")?;
@@ -53,7 +54,7 @@ impl<B: Backend> Playlist<B> {
                 .cast_into::<PyDict>(py).unwrap()
         };
         if ydl_info.get_item(py, "_type").unwrap().extract::<String>(py)? != "playlist" {
-            bail!("Received dict is not of _type playlist.");
+            return Err(format_err!("Received dict is not of _type playlist."));
         }
         let entries = ydl_info.get_item(py, "entries").unwrap().extract::<Vec<PyDict>>(py)?;
 
@@ -61,13 +62,6 @@ impl<B: Backend> Playlist<B> {
         let mut videos = Vec::new();
         let mut deleted_videos = Vec::new();
         for entry in &entries {
-            {
-                println!("== ITEM ==");
-                for (key, val) in entry.items(py) {
-                    println!("'{}' = {}", key, val);
-                }
-            }
-
             let title = entry.get_item(py, "title").unwrap().extract::<String>(py)?;
             let id = entry.get_item(py, "url").unwrap().extract::<String>(py)?;
             if title == "[Private video]" || title == "[Deleted video]" {

@@ -83,9 +83,9 @@ extern crate regex;
 extern crate json;
 extern crate cpython;
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 
-mod err;
+pub mod err;
 mod playlist;
 mod video;
 mod stream;
@@ -104,7 +104,7 @@ use hyper_native_tls::NativeTlsClient;
 use hyper::header::{ContentLength, Headers, ByteRangeSpec, Range};
 
 
-fn send_request(url: &str) -> Result<Response> {
+fn send_request(url: &str) -> Result<Response, Error> {
     let ssl = NativeTlsClient::new()?;
     let connector = HttpsConnector::new(ssl);
     let client = Client::with_connector(connector);

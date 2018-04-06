@@ -34,7 +34,7 @@ pub struct Stream {
     pub url: String,
 }
 impl Stream {
-    pub fn from_py_dict(py: Python, info: &PyDict) -> Result<Stream> {
+    pub fn from_py_dict(py: Python, info: &PyDict) -> Result<Stream, Error> {
         let extension = info.get_item(py, "ext").unwrap()
                             .extract::<String>(py)?;
         let quality = info.get_item(py, "abr")
@@ -92,7 +92,7 @@ impl Stream {
     /// }
     /// ```
 
-    pub fn download(&self, title: &str) -> Result<()> {
+    pub fn download(&self, title: &str) -> Result<(), Error> {
         let response = ::send_request(&self.url)?;
         let file_size = ::get_file_size(&response);
         let file_name = format!("{}.{}", title, &self.extension);
@@ -100,7 +100,7 @@ impl Stream {
         Ok(())
     }
 
-    fn write_file(mut response: Response, title: &str, file_size: u64) -> Result<()> {
+    fn write_file(mut response: Response, title: &str, file_size: u64) -> Result<(), Error> {
         let mut pb = ProgressBar::new(file_size);
         pb.format("╢▌▌░╟");
 
