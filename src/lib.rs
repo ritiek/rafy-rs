@@ -78,7 +78,7 @@ use hyper_native_tls::NativeTlsClient;
 use pbr::ProgressBar;
 use regex::Regex;
 
-use errors::{VideoNotFound, VideoUnavailable};
+use crate::errors::{VideoNotFound, VideoUnavailable};
 
 pub mod errors;
 

@@ -8,6 +8,7 @@ readme = "README.md"
 keywords = ["YouTube", "metadata", "rust", "content", "downloader"]
 categories = ["value-formatting", "data-structures"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 hyper = "0.10"
