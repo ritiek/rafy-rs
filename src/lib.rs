@@ -75,7 +75,9 @@ use std::io::Read;
 use std::io::prelude::*;
 use std::fs::File;
 use regex::Regex;
+use errors::VideoNotFound;
 
+mod errors;
 /// Once you have created a Rafy object using `Rafy::new()`, several data attributes are available.
 ///
 /// # Examples
@@ -90,7 +92,6 @@ use regex::Regex;
 ///     println!("{}", content.viewcount);
 /// }
 /// ```
-
 #[derive(Debug, Clone)]
 pub struct Rafy {
     /// The 11-character video id
@@ -154,7 +155,6 @@ pub struct Rafy {
 ///     }
 /// }
 /// ```
-
 #[derive(Debug, Clone)]
 pub struct Stream {
     /// The extension of the stream
@@ -181,7 +181,6 @@ pub struct Stream {
 /// ```
 
 impl Stream {
-
     /// Downloads the content stream from `Stream` object.
     ///
     /// # Examples
@@ -236,20 +235,9 @@ impl Stream {
             };
         }
     }
-
-}
-
-/// The error type for rafy operations.
-#[derive(Debug)]
-pub enum Error {
-    /// The requested video was not found.
-    VideoNotFound,
-    /// A network request has failed.
-    NetworkRequestFailed(Box<std::error::Error>),
 }
 
 impl Rafy {
-
     /// Create a Rafy object using the `Rafy::new()` function, giving YouTube URL as the argument.
     ///
     /// # Examples
@@ -263,54 +251,54 @@ impl Rafy {
     /// }
     /// ```
 
-    pub fn new(url: &str) -> Result<Rafy, Error> {
+    pub fn new(url: &str) -> Result<Rafy, Box<dyn std::error::Error>> {
         // API key to fetch content
         let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
-        let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*").unwrap();
+        let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*")?;
         let mut vid = url;
 
         if url_regex.is_match(vid) {
             let vid_split = url_regex.captures(vid).unwrap();
-            vid = vid_split.get(1)
-                    .unwrap()
-                    .as_str();
+            vid = vid_split.get(1).unwrap().as_str();
         }
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
         let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
+        dbg!(&api_info);
 
         let mut url_response = match Self::send_request(&url_info) {
             Ok(response) => response,
-            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
+            Err(e) => return Err(Box::new(e)),
         };
         let mut url_response_str = String::new();
-        url_response.read_to_string(&mut url_response_str).unwrap();
+        url_response.read_to_string(&mut url_response_str)?;
         let basic = Self::parse_url(&url_response_str);
 
         let mut api_response = match Self::send_request(&api_info) {
             Ok(response) => response,
-            Err(e) => return Err(Error::NetworkRequestFailed(Box::new(e))),
+            Err(e) => return Err(Box::new(e)),
         };
         let mut api_response_str = String::new();
-        api_response.read_to_string(&mut api_response_str).unwrap();
+        api_response.read_to_string(&mut api_response_str)?;
 
-        let parsed_json = json::parse(&api_response_str).unwrap();
+        dbg!(&api_response_str);
+        let parsed_json = json::parse(&api_response_str)?;
 
         if basic["status"] != "ok" {
-            return Err(Error::VideoNotFound)
+            return Err(Box::new(VideoNotFound::default()));
         }
 
         //println!("{}", url_info);
         //println!("{}", api_info);
 
-        let videoid = &basic["video_id"];
-        let title = &basic["title"];
-        let rating = &basic["avg_rating"];
-        let viewcount = &basic["view_count"];
-        let author = &basic["author"];
-        let length = &basic["length_seconds"];
-        let thumbdefault = &basic["thumbnail_url"];
+        let videoid = &parsed_json["items"][0]["id"];
+        let title = &parsed_json["items"][0]["snippet"]["title"];
+        // let rating = &basic["avg_rating"]; - not available?
+        let viewcount = &parsed_json["items"][0]["statistics"]["viewCount"];
+        let author = &parsed_json["items"][0]["snippet"]["channelTitle"];
+        // let length = &basic["length_seconds"]; - not available
+        let thumbdefault = &parsed_json["items"][0]["snippet"]["thumbnails"]["default"];
         let likes = &parsed_json["items"][0]["statistics"]["likeCount"];
         let dislikes = &parsed_json["items"][0]["statistics"]["dislikeCount"];
         let commentcount = &parsed_json["items"][0]["statistics"]["commentCount"];
@@ -324,27 +312,28 @@ impl Rafy {
 
         let (streams, videostreams, audiostreams) = Self::get_streams(&basic);
 
-        Ok(Rafy {  videoid: videoid.to_string(),
-                title: title.to_string(),
-                rating: rating.to_string(),
-                viewcount: viewcount.parse::<u32>().unwrap(),
-                author: author.to_string(),
-                length: length.parse::<u32>().unwrap(),
-                thumbdefault: thumbdefault.to_string(),
-                likes: likes.to_string().parse::<u32>().unwrap(),
-                dislikes: dislikes.to_string().parse::<u32>().unwrap(),
-                commentcount: commentcount.to_string().parse::<u32>().unwrap(),
-                description: description.to_string(),
-                thumbmedium: thumbmedium.to_string(),
-                thumbhigh: thumbhigh.to_string(),
-                thumbstandard: thumbstandard.to_string(),
-                thumbmaxres: thumbmaxres.to_string(),
-                published: published.to_string(),
-                category: category.to_string().parse::<u32>().unwrap(),
-                streams: streams,
-                videostreams: videostreams,
-                audiostreams: audiostreams,
-            })
+        Ok(Rafy {
+            videoid: videoid.to_string(),
+            title: title.to_string(),
+            rating: format!("{}", 0),
+            viewcount: viewcount.to_string().parse::<u32>()?,
+            author: author.to_string(),
+            length: 0,
+            thumbdefault: thumbdefault.to_string(),
+            likes: likes.to_string().parse::<u32>()?,
+            dislikes: dislikes.to_string().parse::<u32>()?,
+            commentcount: commentcount.to_string().parse::<u32>()?,
+            description: description.to_string(),
+            thumbmedium: thumbmedium.to_string(),
+            thumbhigh: thumbhigh.to_string(),
+            thumbstandard: thumbstandard.to_string(),
+            thumbmaxres: thumbmaxres.to_string(),
+            published: published.to_string(),
+            category: category.to_string().parse::<u32>()?,
+            streams: streams,
+            videostreams: videostreams,
+            audiostreams: audiostreams,
+        })
     }
 
     fn get_streams(basic: &HashMap<String, String>) -> (Vec<Stream>, Vec<Stream>, Vec<Stream>) {
@@ -366,10 +355,10 @@ impl Rafy {
             let stream_url = &parsed["url"];
 
             let parsed_stream = Stream {
-                        extension: extension.to_string(),
-                        quality: quality.to_string(),
-                        url: stream_url.to_string(),
-                    };
+                extension: extension.to_string(),
+                quality: quality.to_string(),
+                url: stream_url.to_string(),
+            };
 
             parsed_streams.push(parsed_stream);
         }
@@ -389,31 +378,28 @@ impl Rafy {
                     .nth(1)
                     .unwrap()
                     .split(';')
-                    .next()
-                    .unwrap();
+                    .next().unwrap();
                 let stream_url = &parsed["url"];
 
                 if parsed.contains_key("quality_label") {
                     let quality = &parsed["quality_label"];
                     let parsed_videostream = Stream {
-                                extension: extension.to_string(),
-                                quality: quality.to_string(),
-                                url: stream_url.to_string(),
-                            };
+                        extension: extension.to_string(),
+                        quality: quality.to_string(),
+                        url: stream_url.to_string(),
+                    };
 
                     parsed_videostreams.push(parsed_videostream);
-
                 } else {
-                    let audio_extension = if extension == &"mp4" {"m4a"} else {extension};
+                    let audio_extension = if extension == &"mp4" { "m4a" } else { extension };
                     let quality = &parsed["bitrate"];
                     let parsed_audiostream = Stream {
-                                extension: audio_extension.to_string(),
-                                quality: quality.to_string(),
-                                url: stream_url.to_string(),
-                            };
+                        extension: audio_extension.to_string(),
+                        quality: quality.to_string(),
+                        url: stream_url.to_string(),
+                    };
 
                     parsed_audiostreams.push(parsed_audiostream);
-
                 }
             }
         }
@@ -435,14 +421,14 @@ impl Rafy {
         let url = format!("{}{}", "http://e.com?", query);
         let parsed_url = hyper::Url::parse(&url).unwrap();
         parsed_url.query_pairs()
-                .into_owned()
-                .collect()
+            .into_owned()
+            .collect()
     }
 
     // get file size from Content-Length header
     fn get_file_size(response: &Response) -> u64 {
         let mut file_size = 0;
-        match response.headers.get::<ContentLength>(){
+        match response.headers.get::<ContentLength>() {
             Some(length) => file_size = length.0,
             None => println!("Content-Length header missing"),
         };
