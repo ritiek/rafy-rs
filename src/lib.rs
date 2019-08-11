@@ -59,25 +59,26 @@
 
 extern crate hyper;
 extern crate hyper_native_tls;
+extern crate json;
 extern crate pbr;
 extern crate regex;
-extern crate json;
 
-use pbr::ProgressBar;
-use std::str;
 use std::collections::HashMap;
-use hyper::client::response::Response;
+use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::Read;
+use std::str;
+
 use hyper::Client;
+use hyper::client::response::Response;
+use hyper::header::{ByteRangeSpec, ContentLength, Headers, Range};
 use hyper::net::HttpsConnector;
 use hyper_native_tls::NativeTlsClient;
-use hyper::header::{ContentLength, Headers, ByteRangeSpec, Range};
-use std::io::Read;
-use std::io::prelude::*;
-use std::fs::File;
+use pbr::ProgressBar;
 use regex::Regex;
+
 use errors::{VideoNotFound, VideoUnavailable};
-use std::error::Error;
-use hyper::status::StatusCode;
 
 pub mod errors;
 
@@ -454,9 +455,8 @@ impl Rafy {
 
     // get file size from Content-Length header
     fn get_file_size(response: &Response) -> Result<u64, impl Error> {
-        let mut file_size = 0;
-        match response.headers.get::<ContentLength>() {
-            Some(length) => file_size = length.0,
+        let file_size = match response.headers.get::<ContentLength>() {
+            Some(length) => length.0,
             None => return Err(VideoUnavailable::default()),
         };
 
