@@ -284,7 +284,7 @@ impl Rafy {
 
     pub fn new(url: &str) -> Result<Rafy, Box<dyn std::error::Error>> {
         // API key to fetch content
-        let key = "AIzaSyBbUAdvXsRpgaPQzBD7JFRCXlhW8U9uMJo";
+        let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
         // Regex for youtube URLs
         let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*")?;
         let mut vid = url;
