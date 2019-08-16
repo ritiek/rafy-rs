@@ -1,6 +1,6 @@
 [package]
 name = "yt_info"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Ritiek <ritiekmalhotra123@gmail.com>","Jakub Tomana <jakub.tomana@protonmail.com"]
 description = "Rust library to download YouTube content and retrieve metadata"
 repository = "https://github.com/kubasitck/yt-info"

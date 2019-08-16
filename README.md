@@ -1,8 +1,8 @@
 # yt_info
 
 ![Rust Toolchain](https://img.shields.io/badge/rust-stable-brightgreen.svg)
-[![Crates.io](https://img.shields.io/crates/v/rafy.svg)](https://crates.io/crates/yt_info)
-[![Docs.rs](https://docs.rs/rafy/badge.svg)](https://docs.rs/yt_info/)
+[![Crates.io](https://crates.io/crates/yt_info)](https://crates.io/crates/yt_info)
+[![Docs.rs](https://docs.rs/yt_info/)](https://docs.rs/yt_info/)
 
 Rust library to fetch YouTube content and retrieve metadata. Fork of [rafy-rs](https://github.com/ritiek/rafy-rs)
 
