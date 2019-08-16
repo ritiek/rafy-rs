@@ -1,7 +1,7 @@
 [package]
 name = "yt_info"
-version = "0.3.0"
-authors = ["Ritiek <ritiekmalhotra123@gmail.com>","Jakub Tomana <jakub.tomana@protonmail.com"]
+version = "0.3.1"
+authors = ["Ritiek <ritiekmalhotra123@gmail.com>","Jakub Tomana <jakub.tomana@protonmail.com>"]
 description = "Rust library to download YouTube content and retrieve metadata"
 repository = "https://github.com/kubasitck/yt-info"
 readme = "README.md"
@@ -11,8 +11,7 @@ license = "MIT"
 edition = "2018"
 
 [dependencies]
-hyper = "0.10"
-hyper-native-tls = "0.2"
+reqwest = "0.9.19"
 pbr = "1.0.0-alpha.3"
 regex = "0.2"
 json = "0.11"

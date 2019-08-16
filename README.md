@@ -12,7 +12,7 @@ Put the below in your `Cargo.toml`
 
 > [dependencies]
 >
-> yt_info = "0.3.0"
+> yt_info = "0.3.1"
 
 ## Usage Examples
 
