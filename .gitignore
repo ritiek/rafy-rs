@@ -4,3 +4,4 @@ Cargo.lock
 *.mp4
 *.m4a
 *.webm
+.idea/

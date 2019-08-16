@@ -1,13 +1,14 @@
 [package]
-name = "rafy"
-version = "0.2.1"
-authors = ["Ritiek <ritiekmalhotra123@gmail.com>"]
+name = "yt_info"
+version = "0.3.2"
+authors = ["Ritiek <ritiekmalhotra123@gmail.com>","Jakub Tomana <jakub.tomana@protonmail.com"]
 description = "Rust library to download YouTube content and retrieve metadata"
-repository = "https://github.com/ritiek/rafy-rs"
+repository = "https://github.com/kubasitck/yt-info"
 readme = "README.md"
 keywords = ["YouTube", "metadata", "rust", "content", "downloader"]
 categories = ["value-formatting", "data-structures"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 hyper = "0.10"
