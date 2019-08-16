@@ -1,11 +1,10 @@
-# rafy
+# yt_info
 
 ![Rust Toolchain](https://img.shields.io/badge/rust-stable-brightgreen.svg)
-[![Crates.io](https://img.shields.io/crates/v/rafy.svg)](https://crates.io/crates/rafy)
-[![Docs.rs](https://docs.rs/rafy/badge.svg)](https://docs.rs/rafy/)
-[![Build Status](https://travis-ci.org/ritiek/rafy-rs.svg?branch=master)](https://travis-ci.org/ritiek/rafy-rs)
+[![Crates.io](https://img.shields.io/crates/v/rafy.svg)](https://crates.io/crates/yt_info)
+[![Docs.rs](https://docs.rs/rafy/badge.svg)](https://docs.rs/yt_info/)
 
-Rust library to fetch YouTube content and retrieve metadata. An attempt to mimic [pafy](https://github.com/mps-youtube/pafy) but in Rust.
+Rust library to fetch YouTube content and retrieve metadata. Fork of [rafy-rs](https://github.com/ritiek/rafy-rs)
 
 ## Installation
 
@@ -13,24 +12,32 @@ Put the below in your `Cargo.toml`
 
 > [dependencies]
 >
-> rafy = "0.2"
+> yt_info = "0.3.0"
 
 ## Usage Examples
 
 ```rust
-extern crate rafy;
-use rafy::Rafy;
+use yt_info::VideoInfo;
+use std::fs::File;
+use std::io;
 
 fn main() {
-    let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
-    println!("{}", content.videoid);
-    println!("{}", content.title);
-    println!("{}", content.rating);
-    println!("{}", content.viewcount);
+    let youtube_token = env!("YOUTUBE_TOKEN");
+
+    let video = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=C0DPdy98e4c").unwrap();
+    let streams = video.streams;
+    let stream = &streams[0];
+
+    let filename = format!("{}-stream.{}",&video.title,&stream.extension);
+
+    let mut file = File::create(filename).unwrap();
+    let mut stream_reader = stream.get_reader().unwrap();
+
+    io::copy(&mut stream_reader,&mut file).unwrap();
 }
 ```
 
-For more examples check out the [**Documentation**](https://docs.rs/rafy/).
+For more examples check out the [**Documentation**](https://docs.rs/yt_info/).
 
 ## Limitations
 
@@ -46,9 +53,7 @@ $ cargo test
 
 ## Contributing
 
-- Rust is still new to me. If there is anything that can be improved, please open an issue or even better, send a PR! :smile:
-
-- Documentation improvements are also most welcome!
+All pull requests all welcome
 
 ## Thanks
 

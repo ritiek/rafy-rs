@@ -1,26 +1,32 @@
-//! `rafy` is a simple-to-use library for downloading YouTube content and retrieving metadata.
+//! `yt-info` is a simple-to-use library for downloading YouTube content and retrieving metadata.
+//! Fork of `rafy-rs`
 //!
 //! ## About
 //!
-//! `rafy` takes the YouTube URL of the video and parses it. It returns fields like title,
-//! author, likes/dislikes and other information about the video. It can also be used to download video
+//! `yt_info` takes the YouTube URL of the video and parses it. It returns fields like title,
+//! author, and other information about the video. It can also be used to download some videos
 //! and audio streams with selectable quality.
 //!
 //! ## Quick Example
 //!
 //! You need to add the line below in `[dependencies]` section in your `Cargo.toml`
 //!
-//! > rafy = "0.1"
+//! > yt_info = "0.3"
 //!
-//! The following example shows how simple it is to use `rafy` to gather information about YouTube
+//! The following example shows how simple it is to use `yt-info` to gather information about YouTube
 //! videos.
 //!
+//! ## Token
+//!
+//! You can obtain token [here](https://console.developers.google.com/apis/credentials)
+//!
 //! ```
-//! extern crate rafy;
-//! use rafy::Rafy;
+//! use yt_info::VideoInfo;
 //!
 //! fn main() {
-//!     let content = Rafy::new("https://www.youtube.com/watch?v=4I_NYya-WWg").unwrap();
+//!     let youtube_token = env!("YOUTUBE_TOKEN");
+//!
+//!     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=4I_NYya-WWg").unwrap();
 //!     println!("{}", content.videoid);
 //!     println!("{}", content.title);
 //!     println!("{}", content.author);
@@ -37,11 +43,12 @@
 //! You can also download YouTube videos by calling method `download()` on a `Stream` struct.
 //!
 //! ```
-//! extern crate rafy;
-//! use rafy::Rafy;
+//! use yt_info::VideoInfo;
 //!
 //! fn main() {
-//!     let content = Rafy::new("https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
+//!     let youtube_token = env!("YOUTUBE_TOKEN");
+//!
+//!     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=AnRSXHQ2qyo").unwrap();
 //!     let title = content.title;
 //!     let streams = content.streams;
 //!     // It is necessary to pass the filename to generate in download()
@@ -54,7 +61,7 @@
 //!
 //! ## License
 //!
-//! `rafy` is licensed under the MIT license. Please read the [LICENSE](LICENSE) file in
+//! `yt_info` is licensed under the MIT license. Please read the [LICENSE](LICENSE) file in
 //! this repository for more information.
 
 extern crate hyper;
@@ -82,22 +89,23 @@ use crate::errors::{VideoNotFound, VideoUnavailable};
 
 pub mod errors;
 
-/// Once you have created a Rafy object using `Rafy::new()`, several data attributes are available.
+/// Once you have created a VideoInfo object using `Rafy::new()`, several data attributes are available.
 ///
 /// # Examples
 ///
 /// ```
-/// extern crate rafy;
-/// use rafy::Rafy;
+/// use yt_info::VideoInfo;
 ///
 /// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
+///     let youtube_token = env!("YOUTUBE_TOKEN");
+///
+///     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
 ///     println!("{}", content.title);
 ///     println!("{}", content.viewcount);
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Rafy {
+pub struct VideoInfo {
     /// The 11-character video id
     pub videoid: String,
     /// The title of the video
@@ -144,18 +152,19 @@ pub struct Rafy {
 /// # Examples
 ///
 /// ```
-/// extern crate rafy;
-/// use rafy::Rafy;
+/// use yt_info::VideoInfo;
 ///
 /// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
+///     let youtube_token = env!("YOUTUBE_TOKEN");
+///
+///     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
 ///     for stream in content.streams {
 ///         println!("{}", stream.extension);
 ///         println!("{}", stream.url);
 ///     }
 /// }
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Stream {
     /// The extension of the stream
     pub extension: String,
@@ -170,11 +179,12 @@ pub struct Stream {
 /// # Examples
 ///
 /// ```
-/// extern crate rafy;
-/// use rafy::Rafy;
+/// use yt_info::VideoInfo;
 ///
 /// fn main() {
-///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
+///     let youtube_token = env!("YOUTUBE_TOKEN");
+///
+///     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
 ///     let streams = content.streams;
 ///     let ref stream = streams[0];
 /// }
@@ -186,11 +196,12 @@ impl Stream {
     /// # Examples
     ///
     /// ```
-    /// extern crate rafy;
-    /// use rafy::Rafy;
+    /// use yt_info::VideoInfo;
     ///
     /// fn main() {
-    ///     let content = Rafy::new("https://www.youtube.com/watch?v=C0DPdy98e4c").unwrap();
+    ///     let youtube_token = env!("YOUTUBE_TOKEN");
+    ///
+    ///     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=C0DPdy98e4c").unwrap();
     ///     let title = content.title;
     ///     let streams = content.streams;
     ///     let stream = &streams[0];
@@ -207,8 +218,8 @@ impl Stream {
     /// }
     /// ```
     pub fn download(&self, title: &str) -> Result<(), Box<dyn Error>> {
-        let response = Rafy::send_request(&self.url)?;
-        let file_size = Rafy::get_file_size(&response)?;
+        let response = VideoInfo::send_request(&self.url)?;
+        let file_size = VideoInfo::get_file_size(&response)?;
         let file_name = format!("{}.{}", title, &self.extension);
         Self::write_file(response, &file_name, file_size);
         Ok(())
@@ -219,11 +230,13 @@ impl Stream {
     /// # Examples
     ///
     /// ```
-    /// use rafy::Rafy;
+    /// use yt_info::VideoInfo;
     /// use std::fs::File;
     /// use std::io;
     /// fn main() {
-    ///     let video = Rafy::new("https://www.youtube.com/watch?v=C0DPdy98e4c").unwrap();
+    ///     let youtube_token = env!("YOUTUBE_TOKEN");
+    ///
+    ///     let video = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=C0DPdy98e4c").unwrap();
     ///     let streams = video.streams;
     ///     let stream = &streams[0];
     ///
@@ -236,13 +249,13 @@ impl Stream {
     /// }
     /// ```
     pub fn get_reader(&self) -> Result<impl Read, Box<dyn Error>> {
-        let response = Rafy::send_request(&self.url)?;
+        let response = VideoInfo::send_request(&self.url)?;
         return Ok(response);
     }
 
     pub fn get_size(&self) -> Result<u64, Box<dyn Error>> {
-        let response = Rafy::send_request(&self.url)?;
-        let size = Rafy::get_file_size(&response)?;
+        let response = VideoInfo::send_request(&self.url)?;
+        let size = VideoInfo::get_file_size(&response)?;
         Ok(size)
     }
 
@@ -268,23 +281,21 @@ impl Stream {
     }
 }
 
-impl Rafy {
+impl VideoInfo {
     /// Create a Rafy object using the `Rafy::new()` function, giving YouTube URL as the argument.
     ///
     /// # Examples
     ///
     /// ```
-    /// extern crate rafy;
-    /// use rafy::Rafy;
+    /// use yt_info::VideoInfo;
     ///
     /// fn main() {
-    ///     let content = Rafy::new("https://www.youtube.com/watch?v=DjMkfARvGE8");
+    ///     let youtube_token = env!("YOUTUBE_TOKEN");
+    ///     let content = VideoInfo::new(youtube_token,"https://www.youtube.com/watch?v=DjMkfARvGE8").unwrap();
     /// }
     /// ```
 
-    pub fn new(url: &str) -> Result<Rafy, Box<dyn std::error::Error>> {
-        // API key to fetch content
-        let key = "AIzaSyDHTKjtUchUxUOzCtYW4V_h1zzcyd0P6c0";
+    pub fn new(api_token: &str, url: &str) -> Result<VideoInfo, Box<dyn std::error::Error>> {
         // Regex for youtube URLs
         let url_regex = Regex::new(r"^.*(?:(?:youtu\.be/|v/|vi/|u/w/|embed/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*")?;
         let mut vid = url;
@@ -295,7 +306,7 @@ impl Rafy {
         }
 
         let url_info = format!("https://youtube.com/get_video_info?video_id={}", vid);
-        let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, key);
+        let api_info = format!("https://www.googleapis.com/youtube/v3/videos?id={}&part=snippet,statistics&key={}", vid, api_token);
 
         let mut url_response = match Self::send_request(&url_info) {
             Ok(response) => response,
@@ -339,7 +350,7 @@ impl Rafy {
 
         let (streams, videostreams, audiostreams) = Self::get_streams(&basic);
 
-        Ok(Rafy {
+        Ok(VideoInfo {
             videoid: videoid.to_string(),
             title: title.to_string(),
             viewcount: viewcount.to_string().parse::<u32>()?,
